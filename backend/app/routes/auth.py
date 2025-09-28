@@ -2,6 +2,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, status, Header
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 from app.db import get_session
 from app.models.user import User
 from app.schemas.auth import RegisterRequest, LoginRequest, UserPublic, TokenPair
@@ -20,7 +21,11 @@ async def register(payload: RegisterRequest, session: AsyncSession = Depends(get
         raise HTTPException(status_code=409, detail="Username taken")
     user = User(email=payload.email, username=uname, password_hash=hash_password(payload.password))
     session.add(user)
-    await session.commit()
+    try:
+        await session.commit()
+    except IntegrityError:
+        await session.rollback()
+        raise HTTPException(status_code=409, detail="Email or username already taken")
     await session.refresh(user)
     return UserPublic(id=user.id, email=user.email, username=user.username, created_at=user.created_at)
 

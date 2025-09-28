@@ -24,7 +24,7 @@ def _make_token(sub: str, ttl_min: int, token_type: str) -> str:
     payload = {
         "sub": sub,
         "type": token_type,
-        "iat": now.timestamp(),  # Use float for microsecond precision
+        "iat": int(now.timestamp()),  # Use float for microsecond precision
         "exp": int((now + timedelta(minutes=ttl_min)).timestamp()),
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
