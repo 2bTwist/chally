@@ -1,7 +1,7 @@
 from __future__ import annotations
 from fastapi import APIRouter, Request
 from datetime import datetime, timezone
-from backend.app.config import settings
+from app.config import settings
 
 router = APIRouter()
 

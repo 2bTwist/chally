@@ -14,7 +14,7 @@ node_modules/
 
 # Env files
 .env*
-!infra/.env.dev
+!infra/.env.dev.example
 .DS_Store
 
 # Docker
