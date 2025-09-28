@@ -15,5 +15,8 @@ ps:
 test:
 	docker compose -f infra/compose.dev.yml --env-file infra/.env.dev exec api python -m pytest -q
 
+migrate:
+	docker compose -f infra/compose.dev.yml --env-file infra/.env.dev exec api alembic upgrade head
+
 sh:
 	docker compose -f infra/compose.dev.yml --env-file infra/.env.dev exec api bash

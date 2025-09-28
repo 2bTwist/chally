@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.logging_setup import configure_logging
 from app.routes.system import router as system_router
+from app.routes.auth import router as auth_router
 import structlog
 
 configure_logging()
@@ -31,6 +32,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(system_router)
+app.include_router(auth_router)
 
 @app.middleware("http")
 async def add_request_id(request: Request, call_next):

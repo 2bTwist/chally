@@ -9,15 +9,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-COPY pyproject.toml /app/
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir "fastapi>=0.115" "uvicorn[standard]>=0.30" \
-       "pydantic>=2.8" "python-json-logger>=2.0.7" "structlog>=24.1.0" \
-       "redis>=5.0.7" "rq>=1.16.2" "asyncpg>=0.29.0" "SQLAlchemy[asyncio]>=2.0.34" \
-       "pytest>=8.3" "httpx>=0.27"
+# Copy metadata first (better layer caching)
+COPY pyproject.toml README.md /app/
 
+# Copy code & tests
 COPY app /app/app
 COPY tests /app/tests
+COPY alembic.ini /app/alembic.ini
+COPY migrations /app/migrations
+
+# Install project with dev extras (pytest, httpx, alembic)
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir ".[dev]"
 
 ENV ENVIRONMENT=dev \
     APP_NAME=peerpush-api \
@@ -26,5 +29,4 @@ ENV ENVIRONMENT=dev \
     API_PORT=8000
 
 EXPOSE 8000
-
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
