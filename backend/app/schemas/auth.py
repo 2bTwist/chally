@@ -5,6 +5,7 @@ from datetime import datetime
 
 class RegisterRequest(BaseModel):
     email: EmailStr
+    username: str = Field(min_length=3, max_length=20, pattern=r"^[a-z0-9_]+$")
     password: str = Field(min_length=8, max_length=128)
 
 class LoginRequest(BaseModel):
@@ -14,6 +15,7 @@ class LoginRequest(BaseModel):
 class UserPublic(BaseModel):
     id: UUID
     email: EmailStr
+    username: str
     created_at: datetime
 
 class TokenPair(BaseModel):

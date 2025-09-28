@@ -11,14 +11,18 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/register", status_code=201, response_model=UserPublic)
 async def register(payload: RegisterRequest, session: AsyncSession = Depends(get_session)):
-    exists = await session.scalar(select(User).where(User.email == payload.email))
-    if exists:
+    uname = payload.username.lower()
+    exists_email = await session.scalar(select(User).where(User.email == payload.email))
+    if exists_email:
         raise HTTPException(status_code=409, detail="Email already registered")
-    user = User(email=payload.email, password_hash=hash_password(payload.password))
+    exists_username = await session.scalar(select(User).where(User.username == uname))
+    if exists_username:
+        raise HTTPException(status_code=409, detail="Username taken")
+    user = User(email=payload.email, username=uname, password_hash=hash_password(payload.password))
     session.add(user)
     await session.commit()
     await session.refresh(user)
-    return UserPublic(id=user.id, email=user.email, created_at=user.created_at)
+    return UserPublic(id=user.id, email=user.email, username=user.username, created_at=user.created_at)
 
 @router.post("/login", response_model=TokenPair)
 async def login(payload: LoginRequest, session: AsyncSession = Depends(get_session)):
@@ -56,4 +60,4 @@ async def me(authorization: str | None = Header(None), session: AsyncSession = D
     user = await session.get(User, user_id)
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
-    return UserPublic(id=user.id, email=user.email, created_at=user.created_at)
+    return UserPublic(id=user.id, email=user.email, username=user.username, created_at=user.created_at)
