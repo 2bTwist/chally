@@ -3,7 +3,7 @@ import os
 from pydantic import BaseModel
 
 class Settings(BaseModel):
-    environment: str = os.getenv("ENVIRONMENT", "development")
+    environment: str = os.getenv("ENVIRONMENT", "dev")
     app_name: str = os.getenv("APP_NAME", "peerpush-api")
     app_version: str = os.getenv("APP_VERSION", "0.1.0")
     git_sha: str = os.getenv("GIT_SHA", "dev")

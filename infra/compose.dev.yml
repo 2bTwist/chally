@@ -49,9 +49,11 @@ services:
     image: minio/minio:latest
     container_name: peerpush_minio
     command: server /data --console-address ":9001"
+    env_file:
+      - .env.dev
     environment:
-      - MINIO_ROOT_USER=admin
-      - MINIO_ROOT_PASSWORD=password
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
     ports:
       - "9000:9000"   # S3 API
       - "9001:9001"   # Console UI
