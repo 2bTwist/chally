@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.uv/
+.eggs/
+dist/
+build/
+
+# Node (for later mobile)
+node_modules/
+.expo/
+*.log
+
+# Env files
+.env*
+!infra/.env.dev
+.DS_Store
+
+# Docker
+*.pid
+*.sock
+
+# IDE
+.vscode/
+.idea/
+
+# Coverage
+.coverage
+htmlcov/
