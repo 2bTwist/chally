@@ -51,6 +51,6 @@ async def test_create_and_join_challenge():
         r3 = await ac.get(f"/challenges/{ch['id']}", headers=hdrs)
         assert r3.status_code == 200
         # List mine
-        r4 = await ac.get("/challenges?mine=1", headers=hdrs)
+        r4 = await ac.get("/challenges/mine", headers=hdrs)
         assert r4.status_code == 200
         assert any(c["id"] == ch["id"] for c in r4.json())

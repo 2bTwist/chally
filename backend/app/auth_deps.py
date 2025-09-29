@@ -1,14 +1,18 @@
 from __future__ import annotations
-from fastapi import Depends, Header, HTTPException
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_session
 from app.security import decode_token
 from app.models.user import User
 
-async def get_current_user(authorization: str | None = Header(None), session: AsyncSession = Depends(get_session)) -> User:
-    if not authorization or not authorization.lower().startswith("bearer "):
-        raise HTTPException(status_code=401, detail="Missing access token")
-    token = authorization.split(" ", 1)[1]
+security = HTTPBearer()
+
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security), 
+    session: AsyncSession = Depends(get_session)
+) -> User:
+    token = credentials.credentials
     try:
         data = decode_token(token)
     except Exception:

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Header, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.db import get_session
@@ -49,6 +49,12 @@ async def create_challenge(payload: ChallengeCreate, session: AsyncSession = Dep
             continue
     raise HTTPException(status_code=500, detail="Failed to generate unique invite code")
 
+@router.get("/mine", response_model=list[ChallengePublic])
+async def list_my_challenges(session: AsyncSession = Depends(get_session), user=Depends(get_current_user)):
+    q = select(Challenge).where(Challenge.owner_id == user.id).order_by(Challenge.created_at.desc())
+    rows = (await session.execute(q)).scalars().all()
+    return [to_public(c) for c in rows]
+
 @router.get("/{challenge_id}", response_model=ChallengePublic)
 async def get_challenge(challenge_id: str, session: AsyncSession = Depends(get_session), user=Depends(get_current_user)):
     ch = await session.get(Challenge, challenge_id)
@@ -56,25 +62,54 @@ async def get_challenge(challenge_id: str, session: AsyncSession = Depends(get_s
         raise HTTPException(status_code=404, detail="Challenge not found")
     return to_public(ch)
 
-@router.get("", response_model=list[ChallengePublic])
-async def list_my_challenges(mine: bool = Query(default=True), session: AsyncSession = Depends(get_session), user=Depends(get_current_user)):
-    q = select(Challenge).where(Challenge.owner_id == user.id).order_by(Challenge.created_at.desc())
-    rows = (await session.execute(q)).scalars().all()
-    return [to_public(c) for c in rows]
-
 @router.post("/{invite_code}/join", response_model=ParticipantPublic, status_code=201)
-async def join_by_code(invite_code: str, session: AsyncSession = Depends(get_session), user=Depends(get_current_user)):
+async def join_by_code(
+    invite_code: str,
+    session: AsyncSession = Depends(get_session),
+    user=Depends(get_current_user),
+    x_client_tz: str | None = Header(default=None, alias="X-Client-Timezone"),
+    body: dict | None = Body(default=None),
+):
     ch = await session.scalar(select(Challenge).where(Challenge.invite_code == invite_code))
     if not ch:
         raise HTTPException(status_code=404, detail="Invalid invite code")
     if ch.status != "active":
         raise HTTPException(status_code=400, detail="Challenge is not active")
+
+    # Determine timezone from header or body
+    tz = x_client_tz or (body or {}).get("timezone")
+    
+    # Default: if DSL is challenge_tz, use that; else use UTC as ultra-fallback
+    rules = ch.rules_json or {}
+    scope = ((rules.get("time_window") or {}).get("scope")) or "participant_local"
+    ch_tz = ((rules.get("time_window") or {}).get("timezone"))
+    if not tz:
+        tz = ch_tz if scope == "challenge_tz" and ch_tz else "UTC"
+
     # Prevent duplicate membership
     existing = await session.scalar(select(Participant).where(Participant.challenge_id == ch.id, Participant.user_id == user.id))
     if existing:
-        return ParticipantPublic(id=existing.id, challenge_id=existing.challenge_id, user_id=existing.user_id, joined_at=existing.joined_at)
-    p = Participant(challenge_id=ch.id, user_id=user.id)
+        # Optional: update timezone if provided (allow timezone updates)
+        if tz:
+            existing.timezone = tz
+            await session.commit()
+            await session.refresh(existing)
+        return ParticipantPublic(
+            id=existing.id, 
+            challenge_id=existing.challenge_id, 
+            user_id=existing.user_id, 
+            joined_at=existing.joined_at,
+            timezone=existing.timezone
+        )
+
+    p = Participant(challenge_id=ch.id, user_id=user.id, timezone=tz)
     session.add(p)
     await session.commit()
     await session.refresh(p)
-    return ParticipantPublic(id=p.id, challenge_id=p.challenge_id, user_id=p.user_id, joined_at=p.joined_at)
+    return ParticipantPublic(
+        id=p.id, 
+        challenge_id=p.challenge_id, 
+        user_id=p.user_id, 
+        joined_at=p.joined_at,
+        timezone=p.timezone
+    )

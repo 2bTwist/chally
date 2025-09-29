@@ -1,5 +1,5 @@
 from __future__ import annotations
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+from pydantic import BaseModel, Field, field_validator, ConfigDict, field_serializer
 from typing import Literal, List
 from uuid import UUID
 from datetime import datetime, time
@@ -10,15 +10,16 @@ VerificationMode = Literal["auto", "quorum"]
 Visibility = Literal["public", "private", "code"]
 
 class TimeWindow(BaseModel):
-    model_config = ConfigDict(
-        json_encoders={
-            time: lambda v: v.strftime('%H:%M:%S')
-        }
-    )
-    
+    model_config = ConfigDict()
+
+    @field_serializer("start", "end")
+    def serialize_time(self, value: time) -> str:
+        return value.strftime('%H:%M:%S')
+
     start: time
     end: time
-    timezone: str
+    timezone: str | None = None  # used when scope = "challenge_tz"
+    scope: Literal["participant_local", "challenge_tz"] = "participant_local"
 
 class Verification(BaseModel):
     mode: VerificationMode
@@ -70,3 +71,4 @@ class ParticipantPublic(BaseModel):
     challenge_id: UUID
     user_id: UUID
     joined_at: datetime
+    timezone: str

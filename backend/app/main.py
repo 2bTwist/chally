@@ -3,6 +3,7 @@ import uuid
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer
 from app.config import settings
 from app.logging_setup import configure_logging
 from app.routes.system import router as system_router
@@ -21,7 +22,15 @@ async def lifespan(app: FastAPI):
     # Shutdown
     log.info("shutdown")
 
-app = FastAPI(title="PeerPush API", version=settings.app_version, lifespan=lifespan)
+app = FastAPI(
+    title="PeerPush API", 
+    version=settings.app_version, 
+    lifespan=lifespan,
+    description="PeerPush API for peer accountability challenges"
+)
+
+# Add security scheme for Swagger UI
+security = HTTPBearer()
 
 app.add_middleware(
     CORSMiddleware,
