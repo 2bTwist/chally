@@ -20,5 +20,10 @@ class Settings(BaseModel):
     serve_media_via_api: bool = os.getenv("SERVE_MEDIA_VIA_API", "1") == "1"
     s3_presign_downloads: bool = os.getenv("S3_PRESIGN_DOWNLOADS", "0") == "1"
     s3_presign_expiry_seconds: int = int(os.getenv("S3_PRESIGN_EXPIRY_SECONDS", "300"))
+    
+    # Stripe configuration
+    stripe_secret_key: str = os.getenv("STRIPE_SECRET_KEY", "")
+    stripe_webhook_secret: str = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+    token_price_usd_cents: int = int(os.getenv("TOKEN_PRICE_USD_CENTS", "1"))
 
 settings = Settings()

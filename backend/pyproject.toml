@@ -28,6 +28,9 @@ dependencies = [
   "python-multipart>=0.0.9",   # form-data uploads (FastAPI)
   "minio>=7.2.0",              # S3 client (MinIO)
   "Pillow>=10.4.0",            # image handling
+  
+  # NEW: Stripe payments
+  "stripe>=10.14.0",
   "ImageHash>=4.3.1",          # perceptual hash (pHash)
   "piexif>=1.1.3",             # EXIF parsing
 ]

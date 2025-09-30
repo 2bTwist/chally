@@ -12,6 +12,8 @@ from app.routes.challenges import router as challenges_router
 from app.routes.feed import router as feed_router
 from app.routes.reviews import router as reviews_router
 from app.routes.ledger import router as ledger_router
+from app.routes.wallet import router as wallet_router
+from app.routes.stripe_webhooks import router as stripe_router
 import structlog
 
 configure_logging()
@@ -50,6 +52,8 @@ app.include_router(challenges_router)
 app.include_router(feed_router)
 app.include_router(reviews_router)
 app.include_router(ledger_router)
+app.include_router(wallet_router) 
+app.include_router(stripe_router)
 
 @app.middleware("http")
 async def add_request_id(request: Request, call_next):
