@@ -16,8 +16,8 @@ class SubmissionPublic(BaseModel):
     status: str
     text_content: str | None = None
     mime_type: str | None = None
-    has_media: bool = False
-    media_url: str | None = None   # relative API path or presigned URL (never the raw key)
+    # 🔒 do not expose storage keys
+    media_url: str | None = None   # served via proxy endpoint
     meta: dict = Field(default_factory=dict)
 
 

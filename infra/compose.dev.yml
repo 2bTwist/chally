@@ -65,6 +65,22 @@ services:
       timeout: 5s
       retries: 10
 
+  worker:
+    build:
+      context: ../backend
+    container_name: peerpush_worker
+    env_file:
+      - .env.dev
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: bash -lc "rq worker -u ${REDIS_URL} default"
+    volumes:
+      - ../backend/app:/app/app:ro
+      - ../backend/tests:/app/tests:ro
+
 volumes:
   pgdata:
   minio:

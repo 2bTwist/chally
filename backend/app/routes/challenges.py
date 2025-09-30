@@ -18,8 +18,16 @@ from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timezone as dt_tz, timedelta
 from zoneinfo import ZoneInfo
 import uuid
+from rq import Queue
+from redis import Redis
+from app.jobs.verify_submission import verify_submission
+import os
 
 router = APIRouter(prefix="/challenges", tags=["challenges"])
+
+# RQ queue (lazy single instance)
+_redis = Redis.from_url(os.getenv("REDIS_URL", "redis://redis:6379/0"))
+q = Queue("default", connection=_redis)
 
 def compute_runtime_state(ch: Challenge, now: datetime) -> str:
     if ch.status in ("canceled", "deleted"):
@@ -210,14 +218,7 @@ async def join_by_code(
 
 
 def _to_submission_public(s: Submission) -> SubmissionPublic:
-    has_media = bool(s.storage_key)
-    # Prefer presigned URL only if explicitly enabled; otherwise proxy via API
-    media_url = None
-    if has_media:
-        if settings.s3_presign_downloads:
-            media_url = presign_get(s.storage_key, settings.s3_presign_expiry_seconds)
-        elif settings.serve_media_via_api:
-            media_url = f"/challenges/{s.challenge_id}/submissions/{s.id}/image"
+    media = f"/challenges/{s.challenge_id}/submissions/{s.id}/image" if s.storage_key else None
     return SubmissionPublic(
         id=s.id,
         challenge_id=s.challenge_id,
@@ -229,9 +230,8 @@ def _to_submission_public(s: Submission) -> SubmissionPublic:
         proof_type=s.proof_type,
         status=s.status,
         text_content=s.text_content,
-        mime_type=s.mime_type if has_media else None,
-        has_media=has_media,
-        media_url=media_url,
+        mime_type=s.mime_type,
+        media_url=media,
         meta=s.meta_json or {},
     )
 
@@ -241,6 +241,7 @@ async def submit_proof(
     challenge_id: str,
     proof_type: str = Query(..., description="one of allowed rules proof_types"),
     text: str | None = Query(default=None, description="text content when proof_type='text'"),
+    overlay_code: str | None = Query(default=None, description="typed overlay code if required"),
     file: UploadFile | None = File(default=None, description="image file when proof_type is an image"),
     session: AsyncSession = Depends(get_session),
     user=Depends(get_current_user),
@@ -296,12 +297,16 @@ async def submit_proof(
     mime_type = None
     meta = {}
 
+    # ... after we build meta for image/text
+    meta = {}
+    # if text proof
     if proof_type == "text":
         if not text:
             raise HTTPException(status_code=400, detail="Missing text content")
         text_content = text.strip()
         if not text_content:
             raise HTTPException(status_code=400, detail="Text cannot be empty")
+        meta = {}
     else:
         if not file:
             raise HTTPException(status_code=400, detail="Missing image file")
@@ -315,6 +320,11 @@ async def submit_proof(
         storage_key = f"ch/{ch.id}/p/{participant.id}/{slot_key}/{uuid.uuid4().hex}.{ext}"
         put_bytes(storage_key, data, mime_type)
 
+    # record typed overlay (if any)
+    if overlay_code:
+        meta["overlay_typed"] = overlay_code.strip().upper()
+
+    # Create submission (initially pending; job decides accept/reject)
     sub = Submission(
         challenge_id=ch.id,
         participant_id=participant.id,
@@ -322,7 +332,7 @@ async def submit_proof(
         window_start_utc=win_start,
         window_end_utc=win_end,
         proof_type=proof_type,
-        status="accepted",  # M3: auto-accept; future: 'pending' when quorum review exists
+        status="pending",
         text_content=text_content,
         storage_key=storage_key,
         mime_type=mime_type,
@@ -331,6 +341,14 @@ async def submit_proof(
     session.add(sub)
     await session.commit()
     await session.refresh(sub)
+
+    # Enqueue verification
+    try:
+        q.enqueue(verify_submission, str(sub.id), job_timeout=60)
+    except Exception:
+        # Non-fatal in dev; submission stays pending
+        pass
+
     return _to_submission_public(sub)
 
 # --- NEW: list submissions (owner sees all; participant can pass mine=1) ---
