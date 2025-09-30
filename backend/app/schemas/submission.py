@@ -16,7 +16,8 @@ class SubmissionPublic(BaseModel):
     status: str
     text_content: str | None = None
     mime_type: str | None = None
-    storage_key: str | None = None   # dev/M0: expose raw key; later we'll return signed URLs
+    has_media: bool = False
+    media_url: str | None = None   # relative API path or presigned URL (never the raw key)
     meta: dict = Field(default_factory=dict)
 
 

@@ -11,7 +11,8 @@ from app.schemas.challenge import ChallengeCreate, ChallengePublic, ParticipantP
 from app.schemas.submission import SubmissionPublic, LeaderboardRow
 from app.services.invite_code import generate_code
 from app.services.media import analyze_image, ext_for_mime
-from app.services.storage import put_bytes, get_bytes
+from app.services.storage import put_bytes, get_bytes, presign_get
+from app.config import settings
 from app.services.slots import compute_slot
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timezone as dt_tz, timedelta
@@ -209,6 +210,14 @@ async def join_by_code(
 
 
 def _to_submission_public(s: Submission) -> SubmissionPublic:
+    has_media = bool(s.storage_key)
+    # Prefer presigned URL only if explicitly enabled; otherwise proxy via API
+    media_url = None
+    if has_media:
+        if settings.s3_presign_downloads:
+            media_url = presign_get(s.storage_key, settings.s3_presign_expiry_seconds)
+        elif settings.serve_media_via_api:
+            media_url = f"/challenges/{s.challenge_id}/submissions/{s.id}/image"
     return SubmissionPublic(
         id=s.id,
         challenge_id=s.challenge_id,
@@ -220,8 +229,9 @@ def _to_submission_public(s: Submission) -> SubmissionPublic:
         proof_type=s.proof_type,
         status=s.status,
         text_content=s.text_content,
-        mime_type=s.mime_type,
-        storage_key=s.storage_key,
+        mime_type=s.mime_type if has_media else None,
+        has_media=has_media,
+        media_url=media_url,
         meta=s.meta_json or {},
     )
 

@@ -11,10 +11,19 @@ from app.models.challenge import Challenge, Participant
 from app.models.submission import Submission
 from app.schemas.submission import FeedItem, SubmissionPublic
 from app.schemas.challenge import RulesDSL
+from app.config import settings
+from app.services.storage import presign_get
 
 router = APIRouter(prefix="/feed", tags=["feed"])
 
 def _to_submission_public(s: Submission) -> SubmissionPublic:
+    has_media = bool(s.storage_key)
+    media_url = None
+    if has_media:
+        if settings.s3_presign_downloads:
+            media_url = presign_get(s.storage_key, settings.s3_presign_expiry_seconds)
+        elif settings.serve_media_via_api:
+            media_url = f"/challenges/{s.challenge_id}/submissions/{s.id}/image"
     return SubmissionPublic(
         id=s.id,
         challenge_id=s.challenge_id,
@@ -26,8 +35,9 @@ def _to_submission_public(s: Submission) -> SubmissionPublic:
         proof_type=s.proof_type,
         status=s.status,
         text_content=s.text_content,
-        mime_type=s.mime_type,
-        storage_key=s.storage_key,
+        mime_type=s.mime_type if has_media else None,
+        has_media=has_media,
+        media_url=media_url,
         meta=s.meta_json or {},
     )
 

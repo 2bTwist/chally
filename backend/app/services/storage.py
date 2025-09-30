@@ -3,6 +3,7 @@ import io
 from minio import Minio
 from minio.error import S3Error
 from app.config import settings
+from datetime import timedelta
 
 def _parse_endpoint(ep: str) -> tuple[str, bool]:
     # Return (host:port, secure)
@@ -40,3 +41,11 @@ def get_bytes(key: str) -> tuple[bytes, str]:
         if e.code == 'NoSuchKey':
             raise FileNotFoundError(f"Object not found: {key}")
         raise
+
+def presign_get(key: str, expires_seconds: int | None = None) -> str:
+    """
+    Return a short-lived signed URL for downloading an object.
+    Note: The URL will contain the object name but is time-limited and signed.
+    """
+    exp = timedelta(seconds=expires_seconds or settings.s3_presign_expiry_seconds)
+    return _client.presigned_get_object(settings.s3_bucket_uploads, key, expires=exp)

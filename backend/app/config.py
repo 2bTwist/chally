@@ -16,5 +16,9 @@ class Settings(BaseModel):
     s3_access_key: str = os.getenv("S3_ACCESS_KEY", "minioadmin")
     s3_secret_key: str = os.getenv("S3_SECRET_KEY", "minioadmin")
     s3_bucket_uploads: str = os.getenv("S3_BUCKET_UPLOADS", "peerpush-uploads-dev")
+    # Media exposure controls
+    serve_media_via_api: bool = os.getenv("SERVE_MEDIA_VIA_API", "1") == "1"
+    s3_presign_downloads: bool = os.getenv("S3_PRESIGN_DOWNLOADS", "0") == "1"
+    s3_presign_expiry_seconds: int = int(os.getenv("S3_PRESIGN_EXPIRY_SECONDS", "300"))
 
 settings = Settings()
