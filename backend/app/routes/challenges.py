@@ -11,7 +11,7 @@ from app.schemas.challenge import ChallengeCreate, ChallengePublic, ParticipantP
 from app.schemas.submission import SubmissionPublic, LeaderboardRow
 from app.services.invite_code import generate_code
 from app.services.media import analyze_image, ext_for_mime
-from app.services.storage import put_bytes
+from app.services.storage import put_bytes, get_bytes
 from app.services.slots import compute_slot
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timezone as dt_tz, timedelta
@@ -425,3 +425,35 @@ async def leaderboard(
         LeaderboardRow(user_id=uid, username=uname, total=int(total), submitted_today=bool(today_counts.get(uid, False)))
         for (uid, uname, total) in rows
     ]
+
+@router.get("/{challenge_id}/submissions/{submission_id}/image")
+async def get_submission_image(
+    challenge_id: str,
+    submission_id: str,
+    session: AsyncSession = Depends(get_session),
+    user=Depends(get_current_user),
+):
+    """Retrieve the uploaded image for a submission."""
+    # Check if user is a participant in the challenge
+    participant = await session.scalar(
+        select(Participant).where(Participant.challenge_id == challenge_id, Participant.user_id == user.id)
+    )
+    if not participant:
+        raise HTTPException(status_code=403, detail="You are not a participant of this challenge")
+    
+    # Get the submission
+    submission = await session.scalar(
+        select(Submission).where(Submission.id == submission_id, Submission.challenge_id == challenge_id)
+    )
+    if not submission:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    
+    if not submission.storage_key:
+        raise HTTPException(status_code=404, detail="No image associated with this submission")
+    
+    try:
+        data, content_type = get_bytes(submission.storage_key)
+        from fastapi.responses import Response
+        return Response(content=data, media_type=content_type)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Image file not found in storage")

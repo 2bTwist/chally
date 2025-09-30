@@ -25,3 +25,18 @@ def put_bytes(key: str, data: bytes, content_type: str) -> None:
     _client.put_object(
         settings.s3_bucket_uploads, key, io.BytesIO(data), length=len(data), content_type=content_type
     )
+
+def get_bytes(key: str) -> tuple[bytes, str]:
+    """
+    Retrieve object from storage.
+    Returns (data, content_type).
+    """
+    try:
+        response = _client.get_object(settings.s3_bucket_uploads, key)
+        data = response.read()
+        content_type = response.headers.get('Content-Type', 'application/octet-stream')
+        return data, content_type
+    except S3Error as e:
+        if e.code == 'NoSuchKey':
+            raise FileNotFoundError(f"Object not found: {key}")
+        raise
