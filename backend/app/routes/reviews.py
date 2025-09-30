@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from typing import Literal
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
+from sqlalchemy.exc import IntegrityError
 from uuid import UUID
 from math import ceil
 from datetime import datetime, timezone as dt_tz, timedelta
@@ -15,6 +16,7 @@ from app.models.review import Vote
 from app.schemas.challenge import RulesDSL
 from app.schemas.review import VoteCreate
 from app.schemas.submission import SubmissionPublic
+from app.services.ledger import create_penalty_once
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
 
@@ -223,40 +225,46 @@ async def cast_vote(payload: VoteCreate, session: AsyncSession = Depends(get_ses
     if s.status != "pending":
         raise HTTPException(status_code=400, detail="Submission not pending review")
 
-    # Upsert-like guard (unique constraint handles race)
-    v = Vote(submission_id=s.id, voter_participant_id=viewer.id, approve=payload.approve)
-    session.add(v)
-    await session.flush()
+    # Wrap vote, quorum evaluation, and penalty creation in explicit transaction
+    async with session.begin():
+        # Upsert-like guard (unique constraint handles race)
+        v = Vote(submission_id=s.id, voter_participant_id=viewer.id, approve=payload.approve)
+        session.add(v)
+        await session.flush()
 
-    # Quorum evaluation
-    rules = RulesDSL.model_validate(ch.rules_json)
-    quorum_pct = max(50, min(100, rules.verification.quorum_pct))
-    # Eligible = participants minus the submitter
-    eligible_cnt = await session.scalar(
-        select(func.count()).select_from(Participant).where(Participant.challenge_id == ch.id)
-    )
-    eligible = max(0, int(eligible_cnt or 0) - 1)
+        # Quorum evaluation
+        rules = RulesDSL.model_validate(ch.rules_json)
+        quorum_pct = max(50, min(100, rules.verification.quorum_pct))
+        # Eligible = participants minus the submitter
+        eligible_cnt = await session.scalar(
+            select(func.count()).select_from(Participant).where(Participant.challenge_id == ch.id)
+        )
+        eligible = max(0, int(eligible_cnt or 0) - 1)
 
-    # If nobody else to vote, auto-accept
-    if eligible <= 0:
-        s.status = "accepted"
-        await session.commit()
-        return {"status": s.status, "reason": "no_eligible_reviewers"}
+        # If nobody else to vote, auto-accept
+        if eligible <= 0:
+            s.status = "accepted"
+            return {"status": s.status, "reason": "no_eligible_reviewers"}
 
-    # Count votes so far
-    votes = (await session.execute(
-        select(Vote).where(Vote.submission_id == s.id)
-    )).scalars().all()
-    approvals = sum(1 for x in votes if x.approve)
-    rejections = sum(1 for x in votes if not x.approve)
+        # Count votes so far
+        votes = (await session.execute(
+            select(Vote).where(Vote.submission_id == s.id)
+        )).scalars().all()
+        approvals = sum(1 for x in votes if x.approve)
+        rejections = sum(1 for x in votes if not x.approve)
 
-    needed = ceil(quorum_pct * eligible / 100.0)
+        needed = ceil(quorum_pct * eligible / 100.0)
 
-    if approvals >= needed:
-        s.status = "accepted"
-    elif rejections > (eligible - needed):
-        s.status = "rejected"
-    # else keep pending
+        prev_status = s.status
+        if approvals >= needed:
+            s.status = "accepted"
+        elif rejections > (eligible - needed):
+            s.status = "rejected"
+        # else keep pending
 
-    await session.commit()
+        # Apply penalty exactly once when a submission becomes rejected
+        if prev_status != "rejected" and s.status == "rejected":
+            penalty = int(rules.penalties or 0)
+            if penalty > 0:
+                await create_penalty_once(session, ch.id, s.participant_id, s.id, penalty)
     return {"status": s.status, "approvals": approvals, "rejections": rejections, "needed": needed, "eligible": eligible}

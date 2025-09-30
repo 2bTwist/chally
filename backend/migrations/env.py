@@ -10,6 +10,7 @@ import app.models.user  # ensure model is imported
 import app.models.challenge
 import app.models.submission  # NEW: ensure model is registered
 import app.models.review  # NEW
+import app.models.ledger  # NEW: ensure ledger model is registered
 
 config = context.config
 fileConfig(config.config_file_name)

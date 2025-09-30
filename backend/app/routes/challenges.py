@@ -22,6 +22,8 @@ from rq import Queue
 from redis import Redis
 from app.jobs.verify_submission import verify_submission
 import os
+from app.models.ledger import Ledger
+from app.services.ledger import ensure_stake_entry
 
 router = APIRouter(prefix="/challenges", tags=["challenges"])
 
@@ -107,6 +109,10 @@ async def create_challenge(
 
             session.add(Participant(challenge_id=ch.id, user_id=user.id, timezone=owner_tz))
 
+            await session.flush()
+            # Stake for owner (if any)
+            owner_part = await session.scalar(select(Participant).where(Participant.challenge_id == ch.id, Participant.user_id == user.id))
+            await ensure_stake_entry(session, ch, owner_part)
             await session.commit()
             await session.refresh(ch)
             return await hydrate_public(session, ch, user.id)
@@ -204,9 +210,13 @@ async def join_by_code(
             timezone=existing.timezone
         )
 
-    p = Participant(challenge_id=ch.id, user_id=user.id, timezone=tz)
-    session.add(p)
-    await session.commit()
+    # Wrap participant creation and staking in explicit transaction
+    async with session.begin():
+        p = Participant(challenge_id=ch.id, user_id=user.id, timezone=tz)
+        session.add(p)
+        await session.flush()
+        # Stake on join (if any)
+        await ensure_stake_entry(session, ch, p)
     await session.refresh(p)
     return ParticipantPublic(
         id=p.id, 
