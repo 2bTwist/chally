@@ -1,9 +1,11 @@
 from __future__ import annotations
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Path
+from typing import Literal
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from uuid import UUID
 from math import ceil
+from datetime import datetime, timezone as dt_tz, timedelta
 
 from app.db import get_session
 from app.auth_deps import get_current_user
@@ -15,6 +17,8 @@ from app.schemas.review import VoteCreate
 from app.schemas.submission import SubmissionPublic
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
+
+StatusFilter = Literal["pending", "accepted", "rejected", "all"]
 
 def _pub(ch_id, s: Submission) -> SubmissionPublic:
     media = f"/challenges/{ch_id}/submissions/{s.id}/image" if s.storage_key else None
@@ -34,32 +38,176 @@ def _pub(ch_id, s: Submission) -> SubmissionPublic:
         meta=s.meta_json or {},
     )
 
-@router.get("", response_model=list[SubmissionPublic])
-async def list_pending(
-    session: AsyncSession = Depends(get_session),
-    user=Depends(get_current_user),
-    challenge_id: UUID | None = Query(default=None),
-    limit: int = Query(default=20, ge=1, le=100),
+async def _list_for_user(
+    session: AsyncSession,
+    user,
+    status: StatusFilter,
+    challenge_id: UUID | None,
+    mine: int,
+    limit: int,
 ):
     # All challenges where user participates
-    q_parts = select(Participant).where(Participant.user_id == user.id)
-    parts = (await session.execute(q_parts)).scalars().all()
+    parts = (await session.execute(select(Participant).where(Participant.user_id == user.id))).scalars().all()
     if not parts:
         return []
-
     part_by_ch = {p.challenge_id: p for p in parts}
-    part_ids = [p.id for p in parts]
+    my_part_ids = [p.id for p in parts]
+    ch_ids = list(part_by_ch.keys())
 
-    q = select(Submission).where(Submission.status == "pending")
+    q = select(Submission).where(Submission.challenge_id.in_(ch_ids))
+
     if challenge_id:
         if challenge_id not in part_by_ch:
             raise HTTPException(status_code=403, detail="Not a participant in that challenge")
         q = q.where(Submission.challenge_id == challenge_id)
 
-    # exclude my own submissions
-    q = q.where(~Submission.participant_id.in_(part_ids)).order_by(Submission.submitted_at.desc()).limit(limit)
+    if status != "all":
+        q = q.where(Submission.status == status)
+
+    # Default behavior:
+    # - pending: show reviewable items (exclude my own)
+    # - others: show all unless mine=1
+    if status == "pending":
+        if mine == 1:
+            # my pending items (awaiting quorum)
+            q = q.where(Submission.participant_id.in_(my_part_ids))
+        else:
+            q = q.where(~Submission.participant_id.in_(my_part_ids))
+    else:
+        if mine == 1:
+            q = q.where(Submission.participant_id.in_(my_part_ids))
+
+    q = q.order_by(Submission.submitted_at.desc()).limit(limit)
     rows = (await session.execute(q)).scalars().all()
     return [_pub(s.challenge_id, s) for s in rows]
+
+@router.get("", response_model=list[SubmissionPublic])
+async def list_default(
+    session: AsyncSession = Depends(get_session),
+    user=Depends(get_current_user),
+    challenge_id: UUID | None = Query(default=None),
+    mine: int = Query(default=0, ge=0, le=1),
+    limit: int = Query(default=20, ge=1, le=100),
+):
+    # Back-compat: defaults to pending queue
+    return await _list_for_user(session, user, "pending", challenge_id, mine, limit)
+
+@router.get("/stats")
+async def review_stats(
+    session: AsyncSession = Depends(get_session),
+    user=Depends(get_current_user),
+    challenge_id: UUID | None = Query(default=None),
+):
+    """
+    Returns global + per-challenge counts:
+      - pending_to_review: pending items you can still vote on
+      - mine_pending: your submissions waiting for quorum
+      - accepted_today / rejected_today: activity pulse (UTC day)
+      - my_votes_today: how many votes you cast today (global)
+    """
+    parts = (await session.execute(select(Participant).where(Participant.user_id == user.id))).scalars().all()
+    if not parts:
+        return {
+            "global": {"pending_to_review": 0, "mine_pending": 0, "accepted_today": 0, "rejected_today": 0, "my_votes_today": 0},
+            "per_challenge": [],
+        }
+
+    part_by_ch = {p.challenge_id: p for p in parts}
+    ch_ids = list(part_by_ch.keys())
+    if challenge_id:
+        if challenge_id not in part_by_ch:
+            raise HTTPException(status_code=403, detail="Not a participant in that challenge")
+        ch_ids = [challenge_id]
+
+    # UTC day bounds
+    now = datetime.now(dt_tz.utc)
+    day_start = datetime(now.year, now.month, now.day, tzinfo=dt_tz.utc)
+    day_end = day_start + timedelta(days=1)
+
+    per = []
+    g_pending = g_mine_pending = g_acc = g_rej = 0
+
+    # Global votes today
+    my_part_ids = [p.id for p in parts]
+    my_votes_today = await session.scalar(
+        select(func.count()).select_from(Vote)
+        .where(Vote.voter_participant_id.in_(my_part_ids))
+        .where(Vote.created_at >= day_start, Vote.created_at < day_end)
+    ) or 0
+
+    # Preload challenge names
+    ch_map = {c.id: c for c in (await session.execute(select(Challenge).where(Challenge.id.in_(ch_ids)))).scalars().all()}
+
+    for cid in ch_ids:
+        me_p = part_by_ch[cid]
+
+        # Subquery: ids I already voted on in this challenge
+        voted_ids_subq = select(Vote.submission_id).where(Vote.voter_participant_id == me_p.id).subquery()
+
+        pending_to_review = await session.scalar(
+            select(func.count()).select_from(Submission)
+            .where(Submission.challenge_id == cid)
+            .where(Submission.status == "pending")
+            .where(Submission.participant_id != me_p.id)
+            .where(~Submission.id.in_(voted_ids_subq))
+        ) or 0
+
+        mine_pending = await session.scalar(
+            select(func.count()).select_from(Submission)
+            .where(Submission.challenge_id == cid)
+            .where(Submission.status == "pending")
+            .where(Submission.participant_id == me_p.id)
+        ) or 0
+
+        accepted_today = await session.scalar(
+            select(func.count()).select_from(Submission)
+            .where(Submission.challenge_id == cid)
+            .where(Submission.status == "accepted")
+            .where(Submission.submitted_at >= day_start, Submission.submitted_at < day_end)
+        ) or 0
+
+        rejected_today = await session.scalar(
+            select(func.count()).select_from(Submission)
+            .where(Submission.challenge_id == cid)
+            .where(Submission.status == "rejected")
+            .where(Submission.submitted_at >= day_start, Submission.submitted_at < day_end)
+        ) or 0
+
+        per.append({
+            "challenge_id": str(cid),
+            "challenge_name": ch_map.get(cid).name if cid in ch_map else "",
+            "pending_to_review": int(pending_to_review),
+            "mine_pending": int(mine_pending),
+            "accepted_today": int(accepted_today),
+            "rejected_today": int(rejected_today),
+        })
+
+        g_pending += int(pending_to_review)
+        g_mine_pending += int(mine_pending)
+        g_acc += int(accepted_today)
+        g_rej += int(rejected_today)
+
+    return {
+        "global": {
+            "pending_to_review": g_pending,
+            "mine_pending": g_mine_pending,
+            "accepted_today": g_acc,
+            "rejected_today": g_rej,
+            "my_votes_today": int(my_votes_today),
+        },
+        "per_challenge": per,
+    }
+
+@router.get("/{status}", response_model=list[SubmissionPublic])
+async def list_with_status(
+    status: StatusFilter = Path(..., regex="^(pending|accepted|rejected|all)$"),
+    session: AsyncSession = Depends(get_session),
+    user=Depends(get_current_user),
+    challenge_id: UUID | None = Query(default=None),
+    mine: int = Query(default=0, ge=0, le=1, description="1=only my submissions"),
+    limit: int = Query(default=20, ge=1, le=100),
+):
+    return await _list_for_user(session, user, status, challenge_id, mine, limit)
 
 @router.post("/vote")
 async def cast_vote(payload: VoteCreate, session: AsyncSession = Depends(get_session), user=Depends(get_current_user)):
