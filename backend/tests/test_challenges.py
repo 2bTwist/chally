@@ -44,9 +44,9 @@ async def test_create_and_join_challenge():
         assert r.status_code == status.HTTP_201_CREATED, r.text
         ch = r.json()
         assert ch["invite_code"]
-        # Join by code (same user is allowed; participant record created)
+        # Owner is auto-added as participant, so joining again should fail
         r2 = await ac.post(f"/challenges/{ch['invite_code']}/join", headers=hdrs)
-        assert r2.status_code == 201
+        assert r2.status_code == 409  # Owner already joined automatically
         # Fetch by id
         r3 = await ac.get(f"/challenges/{ch['id']}", headers=hdrs)
         assert r3.status_code == 200

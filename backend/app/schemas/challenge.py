@@ -8,6 +8,8 @@ ProofType = Literal["selfie", "env_photo", "text", "timer_screenshot"]
 Frequency = Literal["daily", "weekly", "weekdays"]
 VerificationMode = Literal["auto", "quorum"]
 Visibility = Literal["public", "private", "code"]
+ChallengeStatus = Literal["draft", "active", "canceled", "deleted"]
+RuntimeState = Literal["upcoming", "started", "ended", "canceled", "deleted"]
 
 class TimeWindow(BaseModel):
     model_config = ConfigDict()
@@ -63,8 +65,13 @@ class ChallengePublic(BaseModel):
     ends_at: datetime
     entry_stake_tokens: int
     rules: RulesDSL
-    status: str
+    status: ChallengeStatus
     created_at: datetime
+    # New fields:
+    participant_count: int
+    is_owner: bool
+    is_participant: bool
+    runtime_state: RuntimeState
 
 class ParticipantPublic(BaseModel):
     id: UUID
@@ -72,3 +79,9 @@ class ParticipantPublic(BaseModel):
     user_id: UUID
     joined_at: datetime
     timezone: str
+
+class ParticipantWithUser(BaseModel):
+    participant_id: UUID
+    user_id: UUID
+    username: str
+    joined_at: datetime

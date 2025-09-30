@@ -1,10 +1,12 @@
 FROM python:3.13-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    TZ=Etc/UTC
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl ca-certificates build-essential \
+    curl ca-certificates build-essential tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
