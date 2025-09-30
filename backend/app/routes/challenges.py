@@ -210,13 +210,13 @@ async def join_by_code(
             timezone=existing.timezone
         )
 
-    # Wrap participant creation and staking in explicit transaction
-    async with session.begin():
-        p = Participant(challenge_id=ch.id, user_id=user.id, timezone=tz)
-        session.add(p)
-        await session.flush()
-        # Stake on join (if any)
-        await ensure_stake_entry(session, ch, p)
+    # Create participant and stake atomically
+    p = Participant(challenge_id=ch.id, user_id=user.id, timezone=tz)
+    session.add(p)
+    await session.flush()
+    # Stake on join (if any)
+    await ensure_stake_entry(session, ch, p)
+    await session.commit()
     await session.refresh(p)
     return ParticipantPublic(
         id=p.id, 

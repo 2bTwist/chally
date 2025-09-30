@@ -32,18 +32,20 @@ async def get_ledger(
 @router.post("/challenges/{challenge_id}/end")
 async def end_and_payout(
     challenge_id: UUID = Path(...),
-    session: AsyncSession = Depends(get_session),
     user=Depends(get_current_user),
 ):
     from sqlalchemy import text
+    from app.db import engine
+    from sqlalchemy.ext.asyncio import async_sessionmaker
     
-    # Single-closer guards with advisory lock and SERIALIZABLE isolation
-    async with session.begin():
+    # Create a fresh session with SERIALIZABLE isolation for challenge closure
+    async_session = async_sessionmaker(engine, expire_on_commit=False)
+    async with async_session() as session:
+        # Set SERIALIZABLE isolation at the very start of transaction
+        await session.execute(text("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE"))
+        
         # Acquire advisory lock for this challenge
         await session.execute(text("SELECT pg_advisory_xact_lock(hashtext(:cid))"), {"cid": str(challenge_id)})
-        
-        # Set SERIALIZABLE isolation to prevent write skew
-        await session.execute(text("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE"))
         
         # Lock the challenge row for update
         ch = await session.get(Challenge, challenge_id, with_for_update=True)
@@ -53,5 +55,6 @@ async def end_and_payout(
             raise HTTPException(status_code=403, detail="Only owner can close the challenge")
             
         result = await close_and_payout(session, ch)
-    
-    return {"challenge_id": str(ch.id), **result}
+        await session.commit()
+        
+        return {"challenge_id": str(ch.id), **result}
