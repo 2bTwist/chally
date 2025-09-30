@@ -8,6 +8,7 @@ from app.config import settings
 from app.db import Base
 import app.models.user  # ensure model is imported
 import app.models.challenge
+import app.models.submission  # NEW: ensure model is registered
 
 config = context.config
 fileConfig(config.config_file_name)

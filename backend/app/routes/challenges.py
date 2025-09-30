@@ -1,15 +1,22 @@
 from __future__ import annotations
-from fastapi import APIRouter, Depends, HTTPException, Query, Header, Body
+from fastapi import APIRouter, Depends, HTTPException, Query, Header, Body, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, exists
 from app.db import get_session
 from app.auth_deps import get_current_user
 from app.models.challenge import Challenge, Participant
 from app.models.user import User
+from app.models.submission import Submission
 from app.schemas.challenge import ChallengeCreate, ChallengePublic, ParticipantPublic, RulesDSL, ParticipantWithUser
+from app.schemas.submission import SubmissionPublic, LeaderboardRow
 from app.services.invite_code import generate_code
+from app.services.media import analyze_image, ext_for_mime
+from app.services.storage import put_bytes
+from app.services.slots import compute_slot
 from sqlalchemy.exc import IntegrityError
-from datetime import datetime, timezone as dt_tz
+from datetime import datetime, timezone as dt_tz, timedelta
+from zoneinfo import ZoneInfo
+import uuid
 
 router = APIRouter(prefix="/challenges", tags=["challenges"])
 
@@ -199,3 +206,222 @@ async def join_by_code(
         joined_at=p.joined_at,
         timezone=p.timezone
     )
+
+
+def _to_submission_public(s: Submission) -> SubmissionPublic:
+    return SubmissionPublic(
+        id=s.id,
+        challenge_id=s.challenge_id,
+        participant_id=s.participant_id,
+        slot_key=s.slot_key,
+        window_start_utc=s.window_start_utc,
+        window_end_utc=s.window_end_utc,
+        submitted_at=s.submitted_at,
+        proof_type=s.proof_type,
+        status=s.status,
+        text_content=s.text_content,
+        mime_type=s.mime_type,
+        storage_key=s.storage_key,
+        meta=s.meta_json or {},
+    )
+
+# --- NEW: submit proof ---
+@router.post("/{challenge_id}/submit", response_model=SubmissionPublic, status_code=201)
+async def submit_proof(
+    challenge_id: str,
+    proof_type: str = Query(..., description="one of allowed rules proof_types"),
+    text: str | None = Query(default=None, description="text content when proof_type='text'"),
+    file: UploadFile | None = File(default=None, description="image file when proof_type is an image"),
+    session: AsyncSession = Depends(get_session),
+    user=Depends(get_current_user),
+):
+    ch = await session.get(Challenge, challenge_id)
+    if not ch:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+
+    # Status gate: allow only when active and runtime=started
+    now = datetime.now(dt_tz.utc)
+    runtime = compute_runtime_state(ch, now)
+    if ch.status not in ("active",) or runtime not in ("started",):
+        raise HTTPException(status_code=400, detail=f"Submissions closed (status={ch.status}, runtime={runtime})")
+
+    # Participant check
+    participant = await session.scalar(
+        select(Participant).where(Participant.challenge_id == ch.id, Participant.user_id == user.id)
+    )
+    if not participant:
+        raise HTTPException(status_code=403, detail="You are not a participant of this challenge")
+
+    rules = RulesDSL.model_validate(ch.rules_json)
+    if proof_type not in rules.proof_types:
+        raise HTTPException(status_code=400, detail="Proof type not allowed for this challenge")
+
+    # Compute current slot & window
+    scope = rules.time_window.scope or "participant_local"
+    ch_tz = rules.time_window.timezone
+    slot_info = compute_slot(
+        now_utc=now,
+        frequency=rules.frequency,
+        start_t=rules.time_window.start,
+        end_t=rules.time_window.end,
+        scope=scope,
+        participant_tz=participant.timezone,
+        challenge_tz=ch_tz,
+    )
+    if not slot_info:
+        raise HTTPException(status_code=400, detail="Not within a valid submission window")
+
+    slot_key, win_start, win_end = slot_info
+
+    # Enforce one per slot
+    existing = await session.scalar(
+        select(Submission).where(Submission.participant_id == participant.id, Submission.slot_key == slot_key)
+    )
+    if existing:
+        raise HTTPException(status_code=409, detail="Already submitted for this slot")
+
+    # Process content
+    text_content = None
+    storage_key = None
+    mime_type = None
+    meta = {}
+
+    if proof_type == "text":
+        if not text:
+            raise HTTPException(status_code=400, detail="Missing text content")
+        text_content = text.strip()
+        if not text_content:
+            raise HTTPException(status_code=400, detail="Text cannot be empty")
+    else:
+        if not file:
+            raise HTTPException(status_code=400, detail="Missing image file")
+        data = await file.read()
+        mime, phash_hex, exif = analyze_image(data)  # validates JPEG/PNG and integrity
+        mime_type = mime
+        meta = {"phash": phash_hex, "exif": exif or {}}
+        # Very light duplicate flag: compare to last submission's phash (optional future optimization)
+        # Store to S3 (MinIO, speaks S3 API)
+        ext = ext_for_mime(mime)
+        storage_key = f"ch/{ch.id}/p/{participant.id}/{slot_key}/{uuid.uuid4().hex}.{ext}"
+        put_bytes(storage_key, data, mime_type)
+
+    sub = Submission(
+        challenge_id=ch.id,
+        participant_id=participant.id,
+        slot_key=slot_key,
+        window_start_utc=win_start,
+        window_end_utc=win_end,
+        proof_type=proof_type,
+        status="accepted",  # M3: auto-accept; future: 'pending' when quorum review exists
+        text_content=text_content,
+        storage_key=storage_key,
+        mime_type=mime_type,
+        meta_json=meta,
+    )
+    session.add(sub)
+    await session.commit()
+    await session.refresh(sub)
+    return _to_submission_public(sub)
+
+# --- NEW: list submissions (owner sees all; participant can pass mine=1) ---
+@router.get("/{challenge_id}/submissions", response_model=list[SubmissionPublic])
+async def list_submissions(
+    challenge_id: str,
+    mine: int = Query(default=0, ge=0, le=1),
+    day: str | None = Query(default=None, description="YYYY-MM-DD or 'today'"),
+    session: AsyncSession = Depends(get_session),
+    user=Depends(get_current_user),
+):
+    ch = await session.get(Challenge, challenge_id)
+    if not ch:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+
+    # Must be participant to view; owners can view all
+    viewer_is_owner = (ch.owner_id == user.id)
+    part = await session.scalar(select(Participant).where(Participant.challenge_id == ch.id, Participant.user_id == user.id))
+    if not (viewer_is_owner or part):
+        raise HTTPException(status_code=403, detail="Not a participant")
+
+    q = select(Submission).where(Submission.challenge_id == ch.id)
+
+    # Filter mine if requested
+    if mine == 1:
+        if not part:
+            raise HTTPException(status_code=400, detail="You are not a participant")
+        q = q.where(Submission.participant_id == part.id)
+
+    # Optional day filter by slot_key
+    if day:
+        if day == "today":
+            # Resolve today's slot key for the viewer (use viewer's tz for anchor)
+            rules = RulesDSL.model_validate(ch.rules_json)
+            scope = rules.time_window.scope or "participant_local"
+            tz_name = (part.timezone if part else "UTC") if scope == "participant_local" else (rules.time_window.timezone or "UTC")
+            local_today = datetime.now(dt_tz.utc).astimezone(ZoneInfo(tz_name)).date().isoformat()
+            q = q.where(Submission.slot_key == local_today)
+        else:
+            q = q.where(Submission.slot_key == day)
+
+    q = q.order_by(Submission.submitted_at.desc())
+    rows = (await session.execute(q)).scalars().all()
+    return [_to_submission_public(s) for s in rows]
+
+# --- NEW: leaderboard ---
+@router.get("/{challenge_id}/leaderboard", response_model=list[LeaderboardRow])
+async def leaderboard(
+    challenge_id: str,
+    period: str = Query(default="total", pattern="^(total|current_week)$"),
+    session: AsyncSession = Depends(get_session),
+    user=Depends(get_current_user),
+):
+    ch = await session.get(Challenge, challenge_id)
+    if not ch:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+
+    # Any participant can view
+    viewer_part = await session.scalar(select(Participant).where(Participant.challenge_id == ch.id, Participant.user_id == user.id))
+    if not (viewer_part or user.id == ch.owner_id):
+        raise HTTPException(status_code=403, detail="Not a participant")
+
+    # Count accepted-ish submissions per user
+    base = (
+        select(User.id, User.username, func.count(Submission.id))
+        .join(Participant, Participant.user_id == User.id)
+        .join(Submission, Submission.participant_id == Participant.id)
+        .where(Participant.challenge_id == ch.id)
+        .where(Submission.status.in_(("accepted", "flagged", "pending")))
+        .group_by(User.id, User.username)
+    )
+
+    if period == "current_week":
+        # Use UTC week bounds for simplicity (good enough for M3)
+        now = datetime.now(dt_tz.utc)
+        monday = now - timedelta(days=now.weekday())
+        monday_utc = datetime(monday.year, monday.month, monday.day, tzinfo=dt_tz.utc)
+        next_monday_utc = monday_utc + timedelta(days=7)
+        base = base.where(Submission.submitted_at >= monday_utc, Submission.submitted_at < next_monday_utc)
+
+    rows = (await session.execute(base.order_by(func.count(Submission.id).desc()))).all()
+
+    # submitted_today flag per user
+    today_counts = {}
+    now = datetime.now(dt_tz.utc)
+    # Check today existence by slot_key == viewer's "today" to keep semantics simple
+    rules = RulesDSL.model_validate(ch.rules_json)
+    scope = rules.time_window.scope or "participant_local"
+    # We'll compute using each participant's own timezone by joining again (cheap enough)
+    for (uid, uname, total) in rows:
+        p = await session.scalar(select(Participant).where(Participant.challenge_id == ch.id, Participant.user_id == uid))
+        tz_name = p.timezone if p else "UTC"
+        local_today = now.astimezone(ZoneInfo(tz_name if scope == "participant_local" else (rules.time_window.timezone or "UTC"))).date().isoformat()
+        exists_today = await session.scalar(
+            select(func.count(Submission.id))
+            .join(Participant, Participant.id == Submission.participant_id)
+            .where(Participant.user_id == uid, Participant.challenge_id == ch.id, Submission.slot_key == local_today)
+        )
+        today_counts[uid] = (exists_today or 0) > 0
+
+    return [
+        LeaderboardRow(user_id=uid, username=uname, total=int(total), submitted_today=bool(today_counts.get(uid, False)))
+        for (uid, uname, total) in rows
+    ]
