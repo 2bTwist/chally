@@ -10,12 +10,13 @@ class Ledger(Base):
     """
     Event-sourced entries per participant.
     Sign convention:
-      - STAKE   => negative (debit user into pool)
-      - PENALTY => negative (debit user into pool)
-      - PAYOUT  => positive (credit user from pool)
+      - STAKE            => negative (debit user into pool)
+      - PENALTY          => negative (debit user into pool)  
+      - PAYOUT           => positive (credit user from pool)
+      - PLATFORM_REVENUE => positive (platform captures forfeited stakes)
 
     Pool = sum of (-amounts) currently in the challenge.
-    After payout, Σ(amount) per challenge = 0.
+    After payout or revenue capture, Σ(amount) per challenge = 0.
     """
     __tablename__ = "ledger"
 
@@ -25,10 +26,11 @@ class Ledger(Base):
         UUID(as_uuid=True), ForeignKey("challenges.id", ondelete="CASCADE"), index=True, nullable=False
     )
     participant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("participants.id", ondelete="CASCADE"), index=True, nullable=False
+        UUID(as_uuid=True), index=True, nullable=False
+        # NOTE: Not using FK constraint to allow special platform participant ID 00000000-0000-0000-0000-000000000000
     )
 
-    type: Mapped[str] = mapped_column(String(16), nullable=False)  # STAKE | PENALTY | PAYOUT
+    type: Mapped[str] = mapped_column(String(20), nullable=False)  # STAKE | PENALTY | PAYOUT | PLATFORM_REVENUE
     amount: Mapped[int] = mapped_column(Integer, nullable=False)   # sign as per convention
 
     # For idempotency on penalties (1 per submission)

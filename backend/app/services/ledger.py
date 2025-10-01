@@ -11,6 +11,7 @@ from app.models.challenge import Challenge, Participant
 from app.models.submission import Submission
 from app.models.user import User
 from app.schemas.challenge import RulesDSL
+from app.services.wallet import credit_tokens
 
 # ---------- helpers: stakes / penalties ----------
 
@@ -83,17 +84,23 @@ async def snapshot_for_challenge(session: AsyncSession, challenge_id: UUID, view
 
     # shape output
     from app.schemas.ledger import LedgerEntryPublic, ParticipantBalance
+    # Filter out platform revenue entries from participant totals
+    from uuid import UUID
+    platform_id = UUID("00000000-0000-0000-0000-000000000000")
+    participant_balances = [
+        ParticipantBalance(
+            participant_id=pid,
+            user_id=by_part.get(pid, (None, ""))[0],
+            username=by_part.get(pid, (None, ""))[1] or "",
+            balance=int(bal)
+        ) for pid, bal in sorted(balances.items(), key=lambda kv: (-kv[1], str(kv[0])))
+        if pid != platform_id  # Exclude platform pseudo-participant
+    ]
+    
     return {
         "pool_tokens": int(pool),
         "your_balance": int(your_balance),
-        "totals": [
-            ParticipantBalance(
-                participant_id=pid,
-                user_id=by_part.get(pid, (None, ""))[0],
-                username=by_part.get(pid, (None, ""))[1] or "",
-                balance=int(bal)
-            ) for pid, bal in sorted(balances.items(), key=lambda kv: (-kv[1], str(kv[0])))
-        ],
+        "totals": participant_balances,
         "entries": [
             LedgerEntryPublic(
                 id=e.id,
@@ -206,12 +213,36 @@ async def close_and_payout(session: AsyncSession, ch: Challenge) -> dict:
 
     if pool <= 0 or not finishers:
         ch.status = "ended"
+        
+        # NEW: Capture forfeited stakes as platform revenue
+        if pool > 0:
+            # All stakes are forfeited - create a PLATFORM_REVENUE entry
+            # Using a special UUID for platform revenue tracking
+            from uuid import UUID
+            platform_id = UUID("00000000-0000-0000-0000-000000000000")  # Platform pseudo-participant
+            session.add(Ledger(
+                challenge_id=ch.id, 
+                participant_id=platform_id,  # Special platform ID
+                type="PLATFORM_REVENUE", 
+                amount=pool,  # Positive amount (platform gains the forfeited stakes)
+                note=f"forfeited_stakes_{len(finishers)}_finishers"
+            ))
+        
         await session.flush()
         snap = await snapshot_for_challenge(session, ch.id, ch.owner_id)
-        return {"status": "ended_no_payout", "finishers": len(finishers), **snap}
+        return {"status": "ended_no_payout", "finishers": len(finishers), "platform_revenue": pool, **snap}
 
     n = len(finishers)
     per, rem = divmod(pool, n)
+
+    # Map participant -> user_id once
+    part_to_user = {p.id: uid for (p, uid, _uname) in (
+        await session.execute(
+            select(Participant, User.id, User.username)
+            .join(User, User.id == Participant.user_id)
+            .where(Participant.challenge_id == ch.id)
+        )
+    ).all()}
 
     # deterministic remainder distribution by increasing participant UUID
     sorted_parts = sorted(finishers, key=lambda x: str(x.id))
@@ -219,9 +250,55 @@ async def close_and_payout(session: AsyncSession, ch: Challenge) -> dict:
         amt = per + (1 if idx < rem else 0)
         if amt > 0:
             session.add(Ledger(challenge_id=ch.id, participant_id=p.id, type="PAYOUT", amount=amt, note="challenge_payout"))
+            # Also credit user wallet (idempotent by external_id)
+            uid = part_to_user.get(p.id)
+            if uid:
+                await credit_tokens(
+                    session,
+                    user_id=uid,
+                    tokens=amt,
+                    external_id=f"payout_{str(ch.id)[-8:]}_{str(p.id)[-8:]}",
+                    note="challenge_payout",
+                )
 
     ch.status = "ended"
     await session.flush()
 
     snap = await snapshot_for_challenge(session, ch.id, ch.owner_id)
     return {"status": "ended_payout", "finishers": len(finishers), "payout_base": per, "payout_remainder": rem, **snap}
+
+
+async def get_platform_revenue_stats(session: AsyncSession, days: int = 30) -> dict:
+    """Get platform revenue statistics from forfeited stakes."""
+    from datetime import datetime, timezone as dt_tz, timedelta
+    
+    from uuid import UUID
+    cutoff = datetime.now(dt_tz.utc) - timedelta(days=days)
+    platform_id = UUID("00000000-0000-0000-0000-000000000000")
+    
+    # Total revenue from forfeited stakes
+    total_revenue = await session.scalar(
+        select(func.coalesce(func.sum(Ledger.amount), 0))
+        .where(
+            Ledger.participant_id == platform_id,
+            Ledger.type == "PLATFORM_REVENUE",
+            Ledger.created_at >= cutoff
+        )
+    ) or 0
+    
+    # Number of failed challenges that generated revenue
+    failed_challenges = await session.scalar(
+        select(func.count(func.distinct(Ledger.challenge_id)))
+        .where(
+            Ledger.participant_id == platform_id,
+            Ledger.type == "PLATFORM_REVENUE", 
+            Ledger.created_at >= cutoff
+        )
+    ) or 0
+    
+    return {
+        "period_days": days,
+        "total_revenue_tokens": int(total_revenue),
+        "failed_challenges": int(failed_challenges),
+        "avg_revenue_per_failed_challenge": int(total_revenue / max(1, failed_challenges)) if failed_challenges > 0 else 0
+    }

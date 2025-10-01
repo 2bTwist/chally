@@ -25,5 +25,10 @@ class Settings(BaseModel):
     stripe_secret_key: str = os.getenv("STRIPE_SECRET_KEY", "")
     stripe_webhook_secret: str = os.getenv("STRIPE_WEBHOOK_SECRET", "")
     token_price_usd_cents: int = int(os.getenv("TOKEN_PRICE_USD_CENTS", "1"))
+    
+    # Withdrawal configuration
+    withdraw_mode: str = os.getenv("WITHDRAW_MODE", "refund")  # refund|disabled (Connect later)
+    max_deposit_tokens_day: int = int(os.getenv("MAX_DEPOSIT_TOKENS_DAY", "100000"))  # e.g. $1,000 if 1 token = 1 cent
+    refund_window_days: int = int(os.getenv("REFUND_WINDOW_DAYS", "90"))  # typical 90d
 
 settings = Settings()

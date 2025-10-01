@@ -24,3 +24,11 @@ class CreateDepositRequest(BaseModel):
 class CreateDepositResponse(BaseModel):
     checkout_url: str
     session_id: str
+
+class WithdrawRequest(BaseModel):
+    tokens: int = Field(gt=0, description="Number of tokens to withdraw")
+
+class WithdrawResponse(BaseModel):
+    requested: int
+    refunded: int
+    stripe_refunds: list[str]

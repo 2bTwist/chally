@@ -14,6 +14,7 @@ from app.services.media import analyze_image, ext_for_mime
 from app.services.storage import put_bytes, get_bytes, presign_get
 from app.config import settings
 from app.services.slots import compute_slot
+from app.services.wallet import debit_tokens, InsufficientFunds
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timezone as dt_tz, timedelta
 from zoneinfo import ZoneInfo
@@ -112,6 +113,23 @@ async def create_challenge(
             await session.flush()
             # Stake for owner (if any)
             owner_part = await session.scalar(select(Participant).where(Participant.challenge_id == ch.id, Participant.user_id == user.id))
+            
+            # Stake (wallet -> challenge)
+            stake_amt = int(ch.entry_stake_tokens or 0)
+            if stake_amt > 0:
+                try:
+                    await debit_tokens(
+                        session,
+                        user_id=user.id,
+                        tokens=stake_amt,
+                        external_id=f"stake_{str(ch.id)[-8:]}_{str(owner_part.id)[-8:]}",
+                        note="stake_join_owner",
+                    )
+                except InsufficientFunds:
+                    await session.rollback()
+                    raise HTTPException(status_code=402, detail="Insufficient wallet balance for stake")
+                    
+            # Ledger STAKE (idempotent via unique partial index)
             await ensure_stake_entry(session, ch, owner_part)
             await session.commit()
             await session.refresh(ch)
@@ -214,7 +232,23 @@ async def join_by_code(
     p = Participant(challenge_id=ch.id, user_id=user.id, timezone=tz)
     session.add(p)
     await session.flush()
-    # Stake on join (if any)
+    
+    # Stake (wallet -> challenge)
+    stake_amt = int(ch.entry_stake_tokens or 0)
+    if stake_amt > 0:
+        try:
+            await debit_tokens(
+                session,
+                user_id=user.id,
+                tokens=stake_amt,
+                external_id=f"stake_{str(ch.id)[-8:]}_{str(p.id)[-8:]}",
+                note="stake_join",
+            )
+        except InsufficientFunds:
+            await session.rollback()
+            raise HTTPException(status_code=402, detail="Insufficient wallet balance for stake")
+            
+    # Ledger STAKE (idempotent via unique partial index)
     await ensure_stake_entry(session, ch, p)
     await session.commit()
     await session.refresh(p)
