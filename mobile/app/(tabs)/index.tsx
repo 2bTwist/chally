@@ -14,6 +14,13 @@ export default function TabOneScreen() {
       <ThemedText style={styles.title}>PeerPush</ThemedText>
       <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
       
+      {/* Test Button for NativeWind */}
+      <Button
+        label="TEST BUTTON - BRIGHT RED"
+        className="w-full bg-red-500 p-4 mb-4"
+        onPress={() => console.log('Test button pressed')}
+      />
+      
       {/* Navigation Card */}
       <Card className="mb-4 w-full max-w-sm">
         <Text variant="subtitle" className="mb-3 text-center">Quick Navigation</Text>
