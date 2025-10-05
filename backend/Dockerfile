@@ -1,13 +1,25 @@
-FROM python:3.13-slim-bookworm
+# Use Alpine for smaller attack surface and fewer vulnerabilities
+FROM python:3.13-alpine
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    DEBIAN_FRONTEND=noninteractive \
     TZ=Etc/UTC
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl ca-certificates build-essential tzdata \
-    && rm -rf /var/lib/apt/lists/*
+# Install security updates and required packages
+# Update package list, upgrade all packages to latest security patches
+RUN apk update && apk upgrade && \
+    # Try to install the latest OpenSSL version with security fixes
+    apk add --no-cache \
+        'openssl>=3.5.4-r0' \
+        curl \
+        ca-certificates \
+        build-base \
+        tzdata \
+        libffi-dev \
+        openssl-dev \
+    && rm -rf /var/cache/apk/* \
+    # Verify OpenSSL version for security
+    && openssl version
 
 WORKDIR /app
 
@@ -20,9 +32,19 @@ COPY tests /app/tests
 COPY alembic.ini /app/alembic.ini
 COPY migrations /app/migrations
 
+# Create non-root user for security
+RUN addgroup -g 1001 -S appuser && \
+    adduser -u 1001 -S appuser -G appuser
+
 # Install project with dev extras (pytest, httpx, alembic)
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir ".[dev]"
+
+# Change ownership of the app directory to the non-root user
+RUN chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
 
 ENV ENVIRONMENT=dev \
     APP_NAME=peerpush-api \
