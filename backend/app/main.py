@@ -28,10 +28,10 @@ async def lifespan(app: FastAPI):
     log.info("shutdown")
 
 app = FastAPI(
-    title="PeerPush API", 
+    title=f"{settings.app_display_name} API", 
     version=settings.app_version, 
     lifespan=lifespan,
-    description="PeerPush API for peer accountability challenges"
+    description=f"{settings.app_display_name} API for peer accountability challenges"
 )
 
 # Add security scheme for Swagger UI

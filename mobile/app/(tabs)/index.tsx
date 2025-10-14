@@ -27,13 +27,19 @@ export default function TabOneScreen() {
         <View className="gap-3">
           <Button 
             label="🎨 Design System"
-            onPress={() => router.push('/design-system')}
+            onPress={() => router.push('/design-system' as any)}
             className="w-full"
           />
           <Button 
             label="🔐 Auth Mock"
             variant="outline"
-            onPress={() => router.push('/auth-mock')}
+            onPress={() => router.push('/auth-mock' as any)}
+            className="w-full"
+          />
+          <Button 
+            label="🩺 API Health"
+            variant="outline"
+            onPress={() => router.push('/health' as any)}
             className="w-full"
           />
         </View>
