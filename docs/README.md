@@ -1,6 +1,6 @@
-# PeerPush Documentation
+# Chally Documentation
 
-Welcome to the comprehensive documentation for PeerPush - a peer-to-peer challenge verification platform with integrated token economy and payment processing.
+Welcome to the comprehensive documentation for Chally - a peer-to-peer challenge verification platform with integrated token economy and payment processing.
 
 ## � Table of Contents
 
@@ -245,8 +245,8 @@ graph TB
 ### Quick Development Setup
 ```bash
 # Clone and setup
-git clone https://github.com/2bTwist/peerpush.git
-cd peerpush
+git clone https://github.com/2bTwist/chally.git
+cd chally
 
 # Environment setup
 cp .env.example .env.dev
@@ -372,14 +372,14 @@ graph TB
 #### Database Connection Issues
 ```bash
 # Check connection
-docker-compose -f infra/compose.dev.yml exec db psql -U postgres -d peerpush_dev
+docker-compose -f infra/compose.dev.yml exec db psql -U postgres -d chally_dev
 
 # View logs
 docker-compose -f infra/compose.dev.yml logs db
 
 # Reset database
 docker-compose -f infra/compose.dev.yml down
-docker volume rm peerpush_db_data
+docker volume rm chally_db_data
 docker-compose -f infra/compose.dev.yml up -d
 ```
 
@@ -427,10 +427,10 @@ python -c "import jwt; print(jwt.decode('TOKEN', 'SECRET', algorithms=['HS256'])
 - [Redis Documentation](https://redis.io/documentation)
 
 ### Support Channels
-- **Developer Chat**: Slack #peerpush-dev
+- **Developer Chat**: Slack #chally-dev
 - **Issue Tracking**: GitHub Issues
 - **Documentation Updates**: Pull requests welcome
-- **Security Issues**: security@peerpush.com
+- **Security Issues**: security@chally.com
 
 ---
 

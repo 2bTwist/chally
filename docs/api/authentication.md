@@ -2,7 +2,7 @@
 
 ## Overview
 
-The PeerPush authentication system uses JWT-based authentication with access and refresh token pairs. This provides secure, stateless authentication while allowing for token refresh without requiring users to re-enter credentials.
+The Chally authentication system uses JWT-based authentication with access and refresh token pairs. This provides secure, stateless authentication while allowing for token refresh without requiring users to re-enter credentials.
 
 ## Base URL
 ```
