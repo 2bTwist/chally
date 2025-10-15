@@ -2,7 +2,7 @@
 
 ## Overview
 
-PeerPush integrates with Stripe for secure, PCI-compliant payment processing. The system handles deposits via Stripe Checkout and refunds via the Stripe Refunds API, maintaining a complete audit trail of all financial transactions.
+Chally integrates with Stripe for secure, PCI-compliant payment processing. The system handles deposits via Stripe Checkout and refunds via the Stripe Refunds API, maintaining a complete audit trail of all financial transactions.
 
 ## Architecture
 
@@ -14,7 +14,7 @@ graph TB
         STRIPE --> WEBHOOK[Webhook Notification]
     end
     
-    subgraph "PeerPush Backend"
+    subgraph "Chally Backend"
         WEBHOOK --> VERIFY[Verify Webhook]
         VERIFY --> WALLET[Credit Wallet]
         WALLET --> ALLOCATE[Create Allocation]
@@ -76,7 +76,7 @@ async def create_deposit_checkout(payload: CreateDepositRequest, user=Depends(ge
         line_items=[{
             "price_data": {
                 "currency": "usd",
-                "product_data": {"name": f"{payload.tokens} PeerPush Tokens"},
+                "product_data": {"name": f"{payload.tokens} Chally Tokens"},
                 "unit_amount": amount_cents,
             },
             "quantity": 1,

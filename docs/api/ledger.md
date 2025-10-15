@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Ledger API provides comprehensive transaction history, analytics, and financial reporting for the PeerPush platform. It tracks all token movements, platform revenue, and provides detailed audit trails for compliance and analysis.
+The Ledger API provides comprehensive transaction history, analytics, and financial reporting for the Chally platform. It tracks all token movements, platform revenue, and provides detailed audit trails for compliance and analysis.
 
 ## Base URL
 ```
@@ -527,7 +527,7 @@ tx-uuid-2,user-uuid-1,alice,STAKE_PAYMENT,-50,500,450,challenge-uuid-1,Stake pay
       "balance_before": 950,
       "balance_after": 1450,
       "ip_address": "192.168.1.100",
-      "user_agent": "PeerPush Mobile/1.0",
+      "user_agent": "Chally Mobile/1.0",
       "details": {
         "source": "stripe_deposit",
         "payment_intent": "pi_1234567890",

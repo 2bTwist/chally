@@ -17,7 +17,7 @@ export default function AuthMock() {
           source={require('@/assets/images/icon.png')} 
           style={{ width: 72, height: 72, borderRadius: 16 }} 
         />
-        <Text variant="title" className="mt-3">PeerPush</Text>
+        <Text variant="title" className="mt-3">Chally</Text>
         <Text variant="caption">Consistency through accountability</Text>
       </View>
 

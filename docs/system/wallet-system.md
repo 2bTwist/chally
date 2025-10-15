@@ -2,7 +2,7 @@
 
 ## Overview
 
-The PeerPush wallet system implements the M7 (Money Movement Management) pattern with FIFO (First-In-First-Out) token allocation. This ensures accurate tracking of deposit sources and enables precise refunds to original payment methods.
+The Chally wallet system implements the M7 (Money Movement Management) pattern with FIFO (First-In-First-Out) token allocation. This ensures accurate tracking of deposit sources and enables precise refunds to original payment methods.
 
 ## Architecture Principles
 

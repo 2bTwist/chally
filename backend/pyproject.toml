@@ -3,9 +3,9 @@ requires = ["hatchling>=1.25"]
 build-backend = "hatchling.build"
 
 [project]
-name = "peerpush-backend"
+name = "chally-backend"
 version = "0.1.0"
-description = "PeerPush backend (FastAPI)"
+description = "Chally backend (FastAPI)"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

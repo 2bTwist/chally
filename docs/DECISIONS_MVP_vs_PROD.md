@@ -1,4 +1,4 @@
-# PeerPush — MVP vs "Pragmatic Production" Decisions
+# Chally — MVP vs "Pragmatic Production" Decisions
 
 **Goal:** capture choices we made for the MVP and how we'll evolve them to handle "a lot of users" (reliable, cost-aware production — not hyperscale).
 

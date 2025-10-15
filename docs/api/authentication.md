@@ -931,7 +931,7 @@ import { Alert } from 'react-native';
 
 class MobileAuthClient extends AuthClient {
   constructor() {
-    super('https://api.peerpush.com', {
+    super('https://api.chally.com', {
       timeout: 30000,
       retryAttempts: 3
     });
@@ -998,7 +998,7 @@ class MobileAuthClient extends AuthClient {
     // Integrate with react-native-biometrics or similar
     try {
       const biometricResult = await BiometricAuth.authenticate({
-        promptMessage: 'Authenticate to access PeerPush',
+        promptMessage: 'Authenticate to access Chally',
         fallbackPromptMessage: 'Use PIN/Password'
       });
       
@@ -1451,7 +1451,7 @@ scenarios:
 
 ---
 
-*This comprehensive authentication API documentation provides everything needed for secure, scalable user authentication in the PeerPush platform, from basic implementation to advanced security patterns and testing strategies.*
+*This comprehensive authentication API documentation provides everything needed for secure, scalable user authentication in the Chally platform, from basic implementation to advanced security patterns and testing strategies.*
       showValidationErrors(errors.detail);
     } else if (error.status === 401) {
       // Redirect to login

@@ -2,7 +2,7 @@
 
 ## Overview
 
-PeerPush operates on a token-based economy where users deposit real money to receive tokens, which are then used to participate in challenges. The system maintains a 1:1 relationship between tokens and USD cents for simplicity and transparency.
+Chally operates on a token-based economy where users deposit real money to receive tokens, which are then used to participate in challenges. The system maintains a 1:1 relationship between tokens and USD cents for simplicity and transparency.
 
 ## Token Fundamentals
 

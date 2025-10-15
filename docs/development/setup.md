@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide provides comprehensive instructions for setting up a local development environment for PeerPush, including all dependencies, services, and development tools.
+This guide provides comprehensive instructions for setting up a local development environment for Chally, including all dependencies, services, and development tools.
 
 ## Prerequisites
 
@@ -61,8 +61,8 @@ pyenv --version  # Python version management
 ### 1. Repository Setup
 ```bash
 # Clone the repository
-git clone https://github.com/2bTwist/peerpush.git
-cd peerpush
+git clone https://github.com/2bTwist/chally.git
+cd chally
 
 # Create and activate virtual environment
 python3 -m venv venv
@@ -85,7 +85,7 @@ nano .env.dev  # or use your preferred editor
 **Required Environment Variables**:
 ```bash
 # Database Configuration
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/peerpush_dev
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/chally_dev
 REDIS_URL=redis://localhost:6379/0
 
 # JWT Configuration

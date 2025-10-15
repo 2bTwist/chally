@@ -82,6 +82,6 @@ else
     done
     echo ""
     echo "📝 Run individual tests for detailed error messages:"
-    echo "   docker exec peerpush_api python -m pytest tests/test_[name].py -v"
+    echo "   docker exec chally_api python -m pytest tests/test_[name].py -v"
     exit 1
 fi

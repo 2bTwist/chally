@@ -2,7 +2,7 @@
 
 ## Architecture Overview
 
-PeerPush is a peer-to-peer challenge verification platform built with a microservices-inspired architecture using FastAPI, PostgreSQL, and Redis.
+Chally is a peer-to-peer challenge verification platform built with a microservices-inspired architecture using FastAPI, PostgreSQL, and Redis.
 
 ```mermaid
 graph TB
@@ -89,14 +89,14 @@ graph TB
 ```bash
 # Core Application
 ENVIRONMENT=dev
-APP_NAME=peerpush-api
+APP_NAME=chally-api
 APP_VERSION=0.1.0
 API_HOST=0.0.0.0
 API_PORT=8000
 CORS_ORIGINS=*
 
 # Database
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/peerpush_dev
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/chally_dev
 REDIS_URL=redis://redis:6379/0
 
 # Authentication
@@ -108,7 +108,7 @@ REFRESH_TTL_MIN=10080
 S3_ENDPOINT=http://minio:9000
 S3_ACCESS_KEY=minioadmin
 S3_SECRET_KEY=minioadmin
-S3_BUCKET_UPLOADS=peerpush-uploads-dev
+S3_BUCKET_UPLOADS=chally-uploads-dev
 
 # Payment Processing
 STRIPE_SECRET_KEY=sk_test_...

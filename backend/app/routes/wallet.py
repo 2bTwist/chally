@@ -57,7 +57,7 @@ async def create_deposit_checkout(payload: CreateDepositRequest, session: AsyncS
         line_items=[{
             "price_data": {
                 "currency": "usd",
-                "product_data": {"name": "PeerPush Token Top-up"},
+                "product_data": {"name": "Chally Token Top-up"},
                 "unit_amount": int(usd_cents),
             },
             "quantity": 1,

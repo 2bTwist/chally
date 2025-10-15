@@ -11,7 +11,7 @@ import { Text } from '@/components/ui/Text';
 export default function TabOneScreen() {
   return (
     <View style={styles.container}>
-      <ThemedText style={styles.title}>PeerPush</ThemedText>
+      <ThemedText style={styles.title}>Chally</ThemedText>
       <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
       
       {/* Test Button for NativeWind */}

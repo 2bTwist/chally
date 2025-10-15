@@ -2,7 +2,7 @@
 
 ## Overview
 
-PeerPush generates revenue through forfeited stakes from failed challenges. When challenges end with no successful participants, all collected stakes become platform revenue, creating a sustainable business model that incentivizes challenge completion.
+Chally generates revenue through forfeited stakes from failed challenges. When challenges end with no successful participants, all collected stakes become platform revenue, creating a sustainable business model that incentivizes challenge completion.
 
 ## Revenue Model
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-PeerPush implements a comprehensive security model covering authentication, authorization, data protection, and financial security. The system follows industry best practices and compliance standards to protect user data and financial transactions.
+Chally implements a comprehensive security model covering authentication, authorization, data protection, and financial security. The system follows industry best practices and compliance standards to protect user data and financial transactions.
 
 ## Authentication System
 
@@ -541,7 +541,7 @@ async def upload_file_securely(file_content: bytes, key: str) -> str:
             Body=file_content,
             ServerSideEncryption='AES256',  # Encrypt at rest
             Metadata={
-                'uploaded-by': 'peerpush-api',
+                'uploaded-by': 'chally-api',
                 'upload-time': datetime.now(timezone.utc).isoformat()
             }
         )
@@ -780,7 +780,7 @@ STRIPE_SECRET_KEY=sk_live_actual_production_key
 DATABASE_URL=postgresql://secure_user:complex_password@localhost/db
 
 # Security headers
-CORS_ORIGINS=https://peerpush.com
+CORS_ORIGINS=https://chally.com
 SECURE_COOKIES=true
 HTTPS_ONLY=true
 HSTS_ENABLED=true
@@ -798,7 +798,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # Add security middleware
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["peerpush.com", "*.peerpush.com"]
+    allowed_hosts=["chally.com", "*.chally.com"]
 )
 
 app.add_middleware(
@@ -885,4 +885,4 @@ class IncidentResponse:
         pass
 ```
 
-This comprehensive security documentation covers all major aspects of the PeerPush security model, from authentication and authorization to incident response procedures. The system implements defense-in-depth principles with multiple layers of security controls.
+This comprehensive security documentation covers all major aspects of the Chally security model, from authentication and authorization to incident response procedures. The system implements defense-in-depth principles with multiple layers of security controls.

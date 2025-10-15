@@ -114,7 +114,7 @@ graph LR
         B --> C[USD Deposit]
     end
     
-    subgraph "PeerPush Platform"
+    subgraph "Chally Platform"
         C --> D[Token Wallet]
         D --> E[Challenge Stake]
         E --> F[Prize Pool]

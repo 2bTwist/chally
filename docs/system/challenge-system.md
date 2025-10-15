@@ -2,7 +2,7 @@
 
 ## Overview
 
-The challenge system is the core of PeerPush, enabling users to create skill-based challenges that require peer verification for completion. The system handles the complete lifecycle from challenge creation to payout distribution.
+The challenge system is the core of Chally, enabling users to create skill-based challenges that require peer verification for completion. The system handles the complete lifecycle from challenge creation to payout distribution.
 
 ## Challenge Lifecycle
 
