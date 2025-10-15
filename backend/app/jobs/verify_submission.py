@@ -60,15 +60,21 @@ async def _run(submission_id: str):
         checks_ok = True
         flags: list[str] = []
 
-        # 1) Overlay code (typed) if required
-        typed = (s.meta_json or {}).get("overlay_typed")
+        # 1) Check for watermarking errors first
+        meta = s.meta_json or {}
+        if meta.get("watermark_error"):
+            checks_ok = False
+            flags.append("watermark_error")
+        
+        # 2) Watermark verification (embedded) if required
+        embedded_code = meta.get("verification_code")
         if rules.anti_cheat_overlay_required:
             expected = overlay_code(str(ch.id), str(p.id), slot_key)
-            if not typed or typed.strip().upper() != expected:
+            if not embedded_code or embedded_code != expected:
                 checks_ok = False
-                flags.append("overlay_mismatch")
+                flags.append("watermark_mismatch")
 
-        # 2) EXIF required && within window (with small grace)
+        # 3) EXIF required && within window (with small grace)
         if rules.anti_cheat_exif_required and s.mime_type and s.mime_type.startswith("image/"):
             exif_dt = _parse_exif_datetime(s.meta_json or {})
             if exif_dt is None:
@@ -83,9 +89,12 @@ async def _run(submission_id: str):
                     checks_ok = False
                     flags.append("exif_out_of_window")
 
-        # 3) pHash near-duplicate detection (within last few submissions by this participant)
-        ph = (s.meta_json or {}).get("phash")
-        if rules.anti_cheat_phash_check and ph:
+        # 4) Perceptual hash: prevent too-similar submissions from same user
+        ph = None
+        if rules.anti_cheat_phash_check and s.mime_type and s.mime_type.startswith("image/"):
+            # Use original phash (before watermarking) for duplicate detection
+            ph = (s.meta_json or {}).get("original_phash") or (s.meta_json or {}).get("phash")
+        if ph:
             recent = (
                 await session.execute(
                     select(Submission)
@@ -96,7 +105,8 @@ async def _run(submission_id: str):
             ).scalars().all()
             too_similar = False
             for prev in recent:
-                prev_ph = (prev.meta_json or {}).get("phash")
+                # Use original phash for comparison (before watermarking)
+                prev_ph = (prev.meta_json or {}).get("original_phash") or (prev.meta_json or {}).get("phash")
                 if prev_ph:
                     if _hamming_hex(ph, prev_ph) <= 5:
                         too_similar = True

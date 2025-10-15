@@ -15,6 +15,7 @@ from app.services.storage import put_bytes, get_bytes, presign_get
 from app.config import settings
 from app.services.slots import compute_slot
 from app.services.wallet import debit_tokens, InsufficientFunds
+from app.services.overlay import overlay_code
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timezone as dt_tz, timedelta
 from zoneinfo import ZoneInfo
@@ -295,12 +296,46 @@ async def join_by_code(
     await session.commit()
     await session.refresh(p)
     return ParticipantPublic(
-        id=p.id, 
+        id=p.id,
         challenge_id=p.challenge_id, 
         user_id=p.user_id, 
         joined_at=p.joined_at,
         timezone=p.timezone
     )
+
+@router.get("/{challenge_id}/watermark-code")
+async def get_watermark_code(
+    challenge_id: str,
+    slot_key: str = Query(..., description="The slot key (e.g., '2025-01-15') to generate code for"),
+    session: AsyncSession = Depends(get_session),
+    user=Depends(get_current_user),
+):
+    """
+    Generate a watermark code for the mobile app to embed in photos.
+    The code is deterministic based on (challenge_id, participant_id, slot_key).
+    """
+    ch = await session.get(Challenge, challenge_id)
+    if not ch:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+
+    # Must be a participant
+    participant = await session.scalar(
+        select(Participant).where(Participant.challenge_id == ch.id, Participant.user_id == user.id)
+    )
+    if not participant:
+        raise HTTPException(status_code=403, detail="Not a participant")
+
+    # Generate the code
+    code = overlay_code(str(ch.id), str(participant.id), slot_key)
+    
+    return {
+        "challenge_id": challenge_id,
+        "participant_id": str(participant.id),
+        "slot_key": slot_key,
+        "code": code,
+        "watermark_text": f"CHALLY_{code}",
+        "full_string": f"CHALLY_WATERMARK:CHALLY_{code}:SUBMISSION:{challenge_id}:{participant.id}:{slot_key}",
+    }
 
 
 def _to_submission_public(s: Submission) -> SubmissionPublic:
@@ -400,8 +435,9 @@ async def submit_proof(
         mime, phash_hex, exif = analyze_image(data)  # validates JPEG/PNG and integrity
         mime_type = mime
         meta = {"phash": phash_hex, "exif": exif or {}}
-        # Very light duplicate flag: compare to last submission's phash (optional future optimization)
-        # Store to S3 (MinIO, speaks S3 API)
+        
+        # Store original image to S3 (MinIO, speaks S3 API)  
+        # Watermarking will be done by worker job
         ext = ext_for_mime(mime)
         storage_key = f"ch/{ch.id}/p/{participant.id}/{slot_key}/{uuid.uuid4().hex}.{ext}"
         put_bytes(storage_key, data, mime_type)
@@ -428,7 +464,7 @@ async def submit_proof(
     await session.commit()
     await session.refresh(sub)
 
-    # Enqueue verification
+    # Enqueue verification directly (no server-side watermarking)
     try:
         q.enqueue(verify_submission, str(sub.id), job_timeout=60)
     except Exception:
