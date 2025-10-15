@@ -50,6 +50,16 @@ async def hydrate_public(session: AsyncSession, ch: Challenge, user_id) -> Chall
     is_participant = await session.scalar(
         select(exists().where(Participant.challenge_id == ch.id, Participant.user_id == user_id))
     )
+    # Generate presigned URL for image if available
+    image_url = None
+    has_image = bool(ch.image_storage_key)
+    if has_image:
+        try:
+            image_url = presign_get(ch.image_storage_key)
+        except Exception:
+            # If presigning fails, still mark has_image as True but no URL
+            pass
+    
     return ChallengePublic(
         id=ch.id, owner_id=ch.owner_id, name=ch.name, description=ch.description,
         visibility=ch.visibility, invite_code=ch.invite_code,
@@ -60,6 +70,8 @@ async def hydrate_public(session: AsyncSession, ch: Challenge, user_id) -> Chall
         is_owner=is_owner,
         is_participant=bool(is_participant),
         runtime_state=compute_runtime_state(ch, now),
+        image_url=image_url,
+        has_image=has_image,
     )
 
 def to_public(ch: Challenge) -> ChallengePublic:
@@ -75,26 +87,37 @@ def to_public(ch: Challenge) -> ChallengePublic:
 
 @router.post("", response_model=ChallengePublic, status_code=201)
 async def create_challenge(
-    payload: ChallengeCreate,
     session: AsyncSession = Depends(get_session),
     user=Depends(get_current_user),
     x_client_tz: str | None = Header(default=None, alias="X-Client-Timezone"),
+    payload: str = Body(..., description="JSON string of challenge data"),
+    image: UploadFile | None = File(default=None, description="Optional challenge image"),
 ):
-    if payload.ends_at <= payload.starts_at:
+    # Parse the JSON payload
+    try:
+        import json
+        payload_dict = json.loads(payload)
+        challenge_data = ChallengeCreate.model_validate(payload_dict)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=422, detail="Invalid JSON in payload")
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"Invalid challenge data: {str(e)}")
+    
+    if challenge_data.ends_at <= challenge_data.starts_at:
         raise HTTPException(status_code=422, detail="ends_at must be after starts_at")
     # Generate a unique invite code (retry on collision)
     for _ in range(5):
         code = generate_code()
         ch = Challenge(
             owner_id=user.id,
-            name=payload.name,
-            description=payload.description,
-            visibility=payload.visibility,
+            name=challenge_data.name,
+            description=challenge_data.description,
+            visibility=challenge_data.visibility,
             invite_code=code,
-            starts_at=payload.starts_at,
-            ends_at=payload.ends_at,
-            entry_stake_tokens=payload.entry_stake_tokens,
-            rules_json=payload.rules.model_dump(mode='json'),
+            starts_at=challenge_data.starts_at,
+            ends_at=challenge_data.ends_at,
+            entry_stake_tokens=challenge_data.entry_stake_tokens,
+            rules_json=challenge_data.rules.model_dump(mode='json'),
             status="active",
         )
         session.add(ch)
@@ -131,6 +154,25 @@ async def create_challenge(
                     
             # Ledger STAKE (idempotent via unique partial index)
             await ensure_stake_entry(session, ch, owner_part)
+            
+            # Process challenge image if provided
+            if image:
+                try:
+                    data = await image.read()
+                    mime, _, _ = analyze_image(data)  # validates JPEG/PNG and integrity
+                    
+                    # Store to S3 (MinIO) using existing path structure
+                    ext = ext_for_mime(mime)
+                    storage_key = f"ch/{ch.id}/challenge_image.{ext}"
+                    put_bytes(storage_key, data, mime)
+                    
+                    # Update challenge with image info
+                    ch.image_storage_key = storage_key
+                    ch.image_mime_type = mime
+                except Exception as e:
+                    await session.rollback()
+                    raise HTTPException(status_code=400, detail=f"Invalid image: {str(e)}")
+            
             await session.commit()
             await session.refresh(ch)
             return await hydrate_public(session, ch, user.id)
@@ -529,3 +571,27 @@ async def get_submission_image(
         return Response(content=data, media_type=content_type)
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Image file not found in storage")
+
+@router.get("/{challenge_id}/image")
+async def get_challenge_image(
+    challenge_id: str,
+    session: AsyncSession = Depends(get_session),
+    user=Depends(get_current_user),
+):
+    """Retrieve the challenge image."""
+    # Get the challenge
+    challenge = await session.get(Challenge, challenge_id)
+    if not challenge:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+    
+    # Check if challenge has an image
+    if not challenge.image_storage_key:
+        raise HTTPException(status_code=404, detail="No image associated with this challenge")
+    
+    try:
+        data, content_type = get_bytes(challenge.image_storage_key)
+        from fastapi.responses import Response
+        return Response(content=data, media_type=content_type)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Image file not found in storage")
+

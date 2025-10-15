@@ -20,6 +20,10 @@ class Challenge(Base):
     rules_json: Mapped[dict] = mapped_column(JSONB, nullable=False)
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="active")  # draft|active|ended
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    
+    # Challenge image fields
+    image_storage_key: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    image_mime_type: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
 class Participant(Base):
     __tablename__ = "participants"

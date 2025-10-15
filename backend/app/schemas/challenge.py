@@ -72,6 +72,9 @@ class ChallengePublic(BaseModel):
     is_owner: bool
     is_participant: bool
     runtime_state: RuntimeState
+    # Challenge image fields
+    image_url: str | None = None  # presigned URL for challenge image
+    has_image: bool = False  # whether challenge has an image
 
 class ParticipantPublic(BaseModel):
     id: UUID
