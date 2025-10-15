@@ -46,9 +46,14 @@ RUN chown -R appuser:appuser /app
 # Switch to non-root user
 USER appuser
 
+# Accept Git SHA as build argument
+ARG GIT_SHA=dev
+
 ENV ENVIRONMENT=dev \
-    APP_NAME=peerpush-api \
+    APP_NAME=chally-api \
+    APP_DISPLAY_NAME=Chally \
     APP_VERSION=0.1.0 \
+    GIT_SHA=${GIT_SHA} \
     API_HOST=0.0.0.0 \
     API_PORT=8000
 
