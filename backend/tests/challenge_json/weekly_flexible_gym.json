@@ -1,0 +1,32 @@
+{
+  "name": "Weekly Flexible Gym Challenge",
+  "description": "Work out 3 times this week on any days. Submit 3 photos per workout session (upload over 10 minutes with 5-min intervals). Grace: 2 days.",
+  "visibility": "public",
+  "starts_at": "2025-10-16T00:00:00Z",
+  "ends_at": "2025-10-24T23:59:59Z",
+  "entry_stake_tokens": 0,
+  "rules": {
+    "frequency": "weekly",
+    "time_window": {
+      "start": "00:00:00",
+      "end": "23:59:59",
+      "scope": "participant_local"
+    },
+    "proof_types": ["selfie", "env_photo"],
+    "verification": {
+      "mode": "auto"
+    },
+    "grace": 2880,
+    "penalties": 0,
+    "anti_cheat_overlay_required": false,
+    "anti_cheat_exif_required": false,
+    "anti_cheat_phash_check": true,
+    "max_submissions_per_slot": 3,
+    "submission_interval_minutes": 5,
+    "require_submission_stages": false,
+    "submission_stages": null,
+    "photos_per_submission": 3,
+    "custom_days": null,
+    "allowed_usernames": null
+  }
+}

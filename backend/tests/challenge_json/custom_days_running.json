@@ -1,0 +1,32 @@
+{
+  "name": "Custom Days Running Challenge",
+  "description": "Go for a run on Mondays, Wednesdays, Fridays, and Saturdays. Submit 2 photos (before & after) with 15-min intervals. Grace: 1 hour.",
+  "visibility": "public",
+  "starts_at": "2025-10-17T00:00:00Z",
+  "ends_at": "2025-10-31T23:59:59Z",
+  "entry_stake_tokens": 100,
+  "rules": {
+    "frequency": "custom",
+    "time_window": {
+      "start": "05:00:00",
+      "end": "22:00:00",
+      "scope": "participant_local"
+    },
+    "proof_types": ["selfie", "env_photo"],
+    "verification": {
+      "mode": "auto"
+    },
+    "grace": 60,
+    "penalties": 20,
+    "anti_cheat_overlay_required": false,
+    "anti_cheat_exif_required": false,
+    "anti_cheat_phash_check": true,
+    "max_submissions_per_slot": 1,
+    "submission_interval_minutes": 15,
+    "require_submission_stages": false,
+    "submission_stages": null,
+    "photos_per_submission": 2,
+    "custom_days": [0, 2, 4, 5],
+    "allowed_usernames": null
+  }
+}

@@ -19,6 +19,11 @@ class SubmissionPublic(BaseModel):
     # 🔒 do not expose storage keys
     media_url: str | None = None   # served via proxy endpoint
     meta: dict = Field(default_factory=dict)
+    
+    # NEW: Multi-photo progress tracking
+    photos_uploaded: int = Field(default=1, description="Number of photos uploaded so far")
+    photos_required: int = Field(default=1, description="Total photos required for this submission")
+    last_photo_uploaded_at: datetime | None = Field(default=None, description="Timestamp of last photo upload")
 
 
 class FeedItem(BaseModel):

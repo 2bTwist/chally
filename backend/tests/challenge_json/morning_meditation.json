@@ -1,0 +1,32 @@
+{
+  "name": "Morning Meditation Journey",
+  "description": "Daily morning meditation with before and after proof. Submit timer screenshot at start and selfie at end, minimum 2 minutes apart. Grace: 30 minutes.",
+  "visibility": "public",
+  "starts_at": "2025-10-17T00:00:00Z",
+  "ends_at": "2025-10-24T23:59:59Z",
+  "entry_stake_tokens": 25,
+  "rules": {
+    "frequency": "daily",
+    "time_window": {
+      "start": "06:00:00",
+      "end": "11:00:00",
+      "scope": "participant_local"
+    },
+    "proof_types": ["selfie", "timer_screenshot"],
+    "verification": {
+      "mode": "auto"
+    },
+    "grace": 30,
+    "penalties": 5,
+    "anti_cheat_overlay_required": false,
+    "anti_cheat_exif_required": false,
+    "anti_cheat_phash_check": true,
+    "max_submissions_per_slot": 2,
+    "submission_interval_minutes": 2,
+    "require_submission_stages": true,
+    "submission_stages": ["before", "after"],
+    "photos_per_submission": 1,
+    "custom_days": null,
+    "allowed_usernames": null
+  }
+}

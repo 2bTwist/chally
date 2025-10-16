@@ -1,0 +1,21 @@
+{
+  "name": "Private Gym Challenge",
+  "description": "Only invited users can join",
+  "visibility": "private",
+  "starts_at": "2025-10-17T00:00:00Z",
+  "ends_at": "2025-10-24T23:59:59Z",
+  "entry_stake_tokens": 0,
+  "rules": {
+    "frequency": "daily",
+    "time_window": {
+      "start": "06:00:00",
+      "end": "22:00:00",
+      "scope": "participant_local"
+    },
+    "proof_types": ["selfie"],
+    "verification": {
+      "mode": "auto"
+    },
+    "allowed_usernames": ["user2"]
+  }
+}

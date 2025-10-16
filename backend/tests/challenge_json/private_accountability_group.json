@@ -1,0 +1,32 @@
+{
+  "name": "Private Accountability Group",
+  "description": "Private challenge for our accountability group. Track 5 check-ins per day with 2-minute intervals. Grace: 1 hour. Only invited members can join.",
+  "visibility": "private",
+  "starts_at": "2025-10-17T00:00:00Z",
+  "ends_at": "2025-10-24T23:59:59Z",
+  "entry_stake_tokens": 100,
+  "rules": {
+    "frequency": "daily",
+    "time_window": {
+      "start": "06:00:00",
+      "end": "23:00:00",
+      "scope": "participant_local"
+    },
+    "proof_types": ["selfie", "env_photo"],
+    "verification": {
+      "mode": "auto"
+    },
+    "grace": 60,
+    "penalties": 15,
+    "anti_cheat_overlay_required": false,
+    "anti_cheat_exif_required": false,
+    "anti_cheat_phash_check": true,
+    "max_submissions_per_slot": 5,
+    "submission_interval_minutes": 2,
+    "require_submission_stages": false,
+    "submission_stages": null,
+    "photos_per_submission": 1,
+    "custom_days": null,
+    "allowed_usernames": ["user2", "user3", "alice", "bob"]
+  }
+}

@@ -38,6 +38,11 @@ class Submission(Base):
     storage_keys: Mapped[list[str]] = mapped_column(JSONB, nullable=False, default=list)  # Array of storage keys
     mime_types: Mapped[list[str]] = mapped_column(JSONB, nullable=False, default=list)  # Array of mime types
     
+    # NEW: Multi-photo progressive upload tracking
+    photos_uploaded: Mapped[int] = mapped_column(nullable=False, default=1)  # How many photos have been uploaded so far
+    photos_required: Mapped[int] = mapped_column(nullable=False, default=1)  # Total photos required (from challenge.rules_dsl.photos_per_submission)
+    last_photo_uploaded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)  # Last photo upload timestamp for interval enforcement
+    
     # Keep for backward compatibility
     storage_key: Mapped[str | None] = mapped_column(Text(), nullable=True)
     mime_type: Mapped[str | None] = mapped_column(String(64), nullable=True)

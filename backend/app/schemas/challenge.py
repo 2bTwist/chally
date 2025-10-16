@@ -7,7 +7,7 @@ from datetime import datetime, time
 ProofType = Literal["selfie", "env_photo", "text", "timer_screenshot"]
 Frequency = Literal["daily", "weekly", "weekdays", "custom"]
 VerificationMode = Literal["auto", "quorum"]
-Visibility = Literal["public", "private", "code"]
+Visibility = Literal["public", "private", "unlisted"]
 ChallengeStatus = Literal["draft", "active", "canceled", "deleted"]
 RuntimeState = Literal["upcoming", "started", "ended", "canceled", "deleted"]
 
@@ -53,6 +53,9 @@ class RulesDSL(BaseModel):
     
     # NEW: Multi-photo support
     photos_per_submission: int = Field(ge=1, default=1, description="How many photos required per submission")
+    
+    # NEW: Private challenge whitelist (using usernames)
+    allowed_usernames: List[str] | None = Field(default=None, description="Usernames allowed to join private challenges")
 
     @field_validator("proof_types")
     @classmethod
@@ -69,11 +72,21 @@ class RulesDSL(BaseModel):
                 if day < 0 or day > 6:
                     raise ValueError("custom_days must be integers between 0 (Monday) and 6 (Sunday)")
         return v
+    
+    @field_validator("allowed_usernames")
+    @classmethod
+    def validate_usernames(cls, v: List[str] | None):
+        if v is not None:
+            # Remove duplicates and strip whitespace
+            v = list(set(u.strip().lower() for u in v if u.strip()))
+            if not v:
+                return None
+        return v
 
 class ChallengeCreate(BaseModel):
     name: str = Field(min_length=3, max_length=120)
     description: str | None = None
-    visibility: Visibility = "code"
+    visibility: Visibility = "public"
     starts_at: datetime
     ends_at: datetime
     entry_stake_tokens: int = Field(ge=0, default=0)

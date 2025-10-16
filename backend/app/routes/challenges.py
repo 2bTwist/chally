@@ -238,6 +238,33 @@ async def join_by_code(
         raise HTTPException(status_code=404, detail="Invalid invite code")
     if user.id == ch.owner_id:
         raise HTTPException(status_code=409, detail="Owner is already part of this challenge")
+    
+    # NEW: Visibility enforcement
+    rules = RulesDSL.model_validate(ch.rules_json)
+    
+    if ch.visibility == "unlisted":
+        raise HTTPException(
+            status_code=403,
+            detail="This challenge is not accepting participants yet (unlisted/draft)"
+        )
+    
+    if ch.visibility == "private":
+        # Check if user is whitelisted by username
+        is_whitelisted = False
+        if rules.allowed_usernames:
+            # Case-insensitive username check
+            allowed_lower = [u.lower() for u in rules.allowed_usernames]
+            if user.username.lower() in allowed_lower:
+                is_whitelisted = True
+        
+        if not is_whitelisted:
+            raise HTTPException(
+                status_code=403,
+                detail="You are not invited to this private challenge"
+            )
+    
+    # For "public" visibility, code is already validated (route parameter)
+    
     # Gate by admin status and start time
     now = datetime.now(dt_tz.utc)
     if ch.status != "active":
@@ -354,6 +381,9 @@ def _to_submission_public(s: Submission) -> SubmissionPublic:
         mime_type=s.mime_type,
         media_url=media,
         meta=s.meta_json or {},
+        photos_uploaded=s.photos_uploaded,
+        photos_required=s.photos_required,
+        last_photo_uploaded_at=s.last_photo_uploaded_at,
     )
 
 # --- NEW: submit proof ---
@@ -423,26 +453,42 @@ async def submit_proof(
         )
     ).scalars().all()
     
-    existing_count = len(existing_submissions)
+    # Filter out pending submissions (they're in progress)
+    completed_submissions = [s for s in existing_submissions if s.status != "pending"]
+    pending_submission = next((s for s in existing_submissions if s.status == "pending"), None)
+    
+    existing_count = len(completed_submissions)
 
-    # NEW: Check max submissions per slot
+    # NEW: Check max submissions per slot (only count completed ones)
     if existing_count >= rules.max_submissions_per_slot:
         raise HTTPException(
             status_code=409,
             detail=f"Already submitted {existing_count}/{rules.max_submissions_per_slot} times for this slot"
         )
 
-    # NEW: Check submission interval (time between submissions)
-    if rules.submission_interval_minutes and existing_submissions:
-        last_submission = existing_submissions[-1]
-        time_since_last = (now - last_submission.submitted_at).total_seconds() / 60
+    # NEW: Check submission interval (time between completed submissions OR within the same pending submission)
+    if rules.submission_interval_minutes:
+        # Check interval within same pending submission (between photos)
+        if pending_submission and pending_submission.last_photo_uploaded_at:
+            time_since_last_photo = (now - pending_submission.last_photo_uploaded_at).total_seconds() / 60
+            if time_since_last_photo < rules.submission_interval_minutes:
+                minutes_remaining = int(rules.submission_interval_minutes - time_since_last_photo)
+                raise HTTPException(
+                    status_code=429,
+                    detail=f"Must wait {minutes_remaining} more minute(s) before uploading next photo"
+                )
         
-        if time_since_last < rules.submission_interval_minutes:
-            minutes_remaining = int(rules.submission_interval_minutes - time_since_last)
-            raise HTTPException(
-                status_code=429,  # Too Many Requests
-                detail=f"Must wait {minutes_remaining} more minute(s) before next submission"
-            )
+        # Check interval between different submissions
+        elif completed_submissions:
+            last_completed = completed_submissions[-1]
+            time_since_last = (now - last_completed.submitted_at).total_seconds() / 60
+            
+            if time_since_last < rules.submission_interval_minutes:
+                minutes_remaining = int(rules.submission_interval_minutes - time_since_last)
+                raise HTTPException(
+                    status_code=429,
+                    detail=f"Must wait {minutes_remaining} more minute(s) before next submission"
+                )
 
     # NEW: Validate submission stages (if required)
     if rules.require_submission_stages:
@@ -458,8 +504,8 @@ async def submit_proof(
                 detail=f"Invalid stage '{submission_stage}'. Must be one of: {rules.submission_stages}"
             )
         
-        # Check if this stage already exists
-        stage_exists = any(s.submission_stage == submission_stage for s in existing_submissions)
+        # Check if this stage already exists (only check completed submissions)
+        stage_exists = any(s.submission_stage == submission_stage for s in completed_submissions)
         if stage_exists:
             raise HTTPException(
                 status_code=409,
@@ -511,34 +557,74 @@ async def submit_proof(
     if overlay_code:
         meta["overlay_typed"] = overlay_code.strip().upper()
 
-    # Create submission (initially pending; job decides accept/reject)
-    sub = Submission(
-        challenge_id=ch.id,
-        participant_id=participant.id,
-        slot_key=slot_key,
-        window_start_utc=win_start,
-        window_end_utc=win_end,
-        proof_type=proof_type,
-        status="pending",
-        submission_sequence=existing_count + 1,  # NEW: Track submission order
-        submission_stage=submission_stage,  # NEW: Track submission stage
-        text_content=text_content,
-        storage_key=storage_key,
-        mime_type=mime_type,
-        storage_keys=[storage_key] if storage_key else [],  # NEW: Array support
-        mime_types=[mime_type] if mime_type else [],  # NEW: Array support
-        meta_json=meta,
-    )
-    session.add(sub)
-    await session.commit()
-    await session.refresh(sub)
+    # NEW: Handle multi-photo progressive uploads
+    photos_required = rules.photos_per_submission
+    
+    # If there's a pending submission, add to it
+    if pending_submission:
+        # Append new photo
+        if storage_key:
+            pending_submission.storage_keys = list(pending_submission.storage_keys) + [storage_key]
+            pending_submission.mime_types = list(pending_submission.mime_types) + [mime_type]
+            # Update backward-compatible fields with last photo
+            pending_submission.storage_key = storage_key
+            pending_submission.mime_type = mime_type
+        
+        # Update progress tracking
+        pending_submission.photos_uploaded += 1
+        pending_submission.last_photo_uploaded_at = now
+        
+        # Merge metadata (keep phash history)
+        existing_meta = pending_submission.meta_json or {}
+        if "phash" in meta:
+            phash_history = existing_meta.get("phash_history", [])
+            phash_history.append(meta["phash"])
+            existing_meta["phash_history"] = phash_history
+            existing_meta["phash"] = meta["phash"]  # Update to latest
+        if overlay_code:
+            existing_meta["overlay_typed"] = overlay_code.strip().upper()
+        pending_submission.meta_json = existing_meta
+        
+        # If all photos uploaded, mark as completed (ready for verification)
+        if pending_submission.photos_uploaded >= photos_required:
+            pending_submission.status = "completed"
+        
+        await session.commit()
+        await session.refresh(pending_submission)
+        sub = pending_submission
+    else:
+        # Create new submission
+        sub = Submission(
+            challenge_id=ch.id,
+            participant_id=participant.id,
+            slot_key=slot_key,
+            window_start_utc=win_start,
+            window_end_utc=win_end,
+            proof_type=proof_type,
+            status="pending" if photos_required > 1 else "completed",  # pending if more photos needed
+            submission_sequence=existing_count + 1,
+            submission_stage=submission_stage,
+            text_content=text_content,
+            storage_key=storage_key,
+            mime_type=mime_type,
+            storage_keys=[storage_key] if storage_key else [],
+            mime_types=[mime_type] if mime_type else [],
+            photos_uploaded=1,
+            photos_required=photos_required,
+            last_photo_uploaded_at=now if storage_key else None,
+            meta_json=meta,
+        )
+        session.add(sub)
+        await session.commit()
+        await session.refresh(sub)
 
-    # Enqueue verification directly (no server-side watermarking)
-    try:
-        q.enqueue(verify_submission, str(sub.id), job_timeout=60)
-    except Exception:
-        # Non-fatal in dev; submission stays pending
-        pass
+    # Enqueue verification only if submission is completed
+    if sub.status == "completed":
+        try:
+            q.enqueue(verify_submission, str(sub.id), job_timeout=60)
+        except Exception:
+            # Non-fatal in dev; submission stays completed (will be verified later)
+            pass
 
     return _to_submission_public(sub)
 
