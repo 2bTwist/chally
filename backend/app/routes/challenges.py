@@ -363,6 +363,7 @@ async def submit_proof(
     proof_type: str = Query(..., description="one of allowed rules proof_types"),
     text: str | None = Query(default=None, description="text content when proof_type='text'"),
     overlay_code: str | None = Query(default=None, description="typed overlay code if required"),
+    submission_stage: str | None = Query(default=None, description="optional stage: start/ongoing/end"),
     file: UploadFile | None = File(default=None, description="image file when proof_type is an image"),
     session: AsyncSession = Depends(get_session),
     user=Depends(get_current_user),
@@ -399,18 +400,82 @@ async def submit_proof(
         scope=scope,
         participant_tz=participant.timezone,
         challenge_tz=ch_tz,
+        custom_days=rules.custom_days,
     )
     if not slot_info:
+        if rules.frequency == "custom" and rules.custom_days:
+            day_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+            allowed_days = ", ".join(day_names[d] for d in sorted(rules.custom_days))
+            raise HTTPException(status_code=400, detail=f"Submissions only allowed on: {allowed_days}")
         raise HTTPException(status_code=400, detail="Not within a valid submission window")
 
     slot_key, win_start, win_end = slot_info
 
-    # Enforce one per slot
-    existing = await session.scalar(
-        select(Submission).where(Submission.participant_id == participant.id, Submission.slot_key == slot_key)
-    )
-    if existing:
-        raise HTTPException(status_code=409, detail="Already submitted for this slot")
+    # NEW: Query existing submissions for this slot (to support multiple submissions per slot)
+    existing_submissions = (
+        await session.execute(
+            select(Submission)
+            .where(
+                Submission.participant_id == participant.id,
+                Submission.slot_key == slot_key
+            )
+            .order_by(Submission.submitted_at.asc())
+        )
+    ).scalars().all()
+    
+    existing_count = len(existing_submissions)
+
+    # NEW: Check max submissions per slot
+    if existing_count >= rules.max_submissions_per_slot:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Already submitted {existing_count}/{rules.max_submissions_per_slot} times for this slot"
+        )
+
+    # NEW: Check submission interval (time between submissions)
+    if rules.submission_interval_minutes and existing_submissions:
+        last_submission = existing_submissions[-1]
+        time_since_last = (now - last_submission.submitted_at).total_seconds() / 60
+        
+        if time_since_last < rules.submission_interval_minutes:
+            minutes_remaining = int(rules.submission_interval_minutes - time_since_last)
+            raise HTTPException(
+                status_code=429,  # Too Many Requests
+                detail=f"Must wait {minutes_remaining} more minute(s) before next submission"
+            )
+
+    # NEW: Validate submission stages (if required)
+    if rules.require_submission_stages:
+        if not submission_stage:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Submission stage required. Must be one of: {rules.submission_stages}"
+            )
+        
+        if rules.submission_stages and submission_stage not in rules.submission_stages:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid stage '{submission_stage}'. Must be one of: {rules.submission_stages}"
+            )
+        
+        # Check if this stage already exists
+        stage_exists = any(s.submission_stage == submission_stage for s in existing_submissions)
+        if stage_exists:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Already submitted '{submission_stage}' stage for this slot"
+            )
+        
+        # Enforce stage order
+        if rules.submission_stages:
+            expected_stage_index = existing_count
+            if expected_stage_index < len(rules.submission_stages):
+                expected_stage = rules.submission_stages[expected_stage_index]
+                if submission_stage != expected_stage:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Must submit stages in order. Expected: '{expected_stage}', got: '{submission_stage}'"
+                    )
 
     # Process content
     text_content = None
@@ -455,9 +520,13 @@ async def submit_proof(
         window_end_utc=win_end,
         proof_type=proof_type,
         status="pending",
+        submission_sequence=existing_count + 1,  # NEW: Track submission order
+        submission_stage=submission_stage,  # NEW: Track submission stage
         text_content=text_content,
         storage_key=storage_key,
         mime_type=mime_type,
+        storage_keys=[storage_key] if storage_key else [],  # NEW: Array support
+        mime_types=[mime_type] if mime_type else [],  # NEW: Array support
         meta_json=meta,
     )
     session.add(sub)

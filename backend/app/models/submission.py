@@ -25,15 +25,21 @@ class Submission(Base):
 
     submitted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
+    # NEW: Submission ordering and staging
+    submission_sequence: Mapped[int] = mapped_column(nullable=False, default=1)  # 1, 2, 3, etc.
+    submission_stage: Mapped[str | None] = mapped_column(String(32), nullable=True)  # 'start' | 'ongoing' | 'end' | None
+
     proof_type: Mapped[str] = mapped_column(String(32), nullable=False)     # 'selfie' | 'env_photo' | 'text' | 'timer_screenshot'
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="accepted")  # 'pending'|'accepted'|'rejected'|'flagged'
 
     text_content: Mapped[str | None] = mapped_column(Text(), nullable=True)
+    
+    # NEW: Support multiple images per submission
+    storage_keys: Mapped[list[str]] = mapped_column(JSONB, nullable=False, default=list)  # Array of storage keys
+    mime_types: Mapped[list[str]] = mapped_column(JSONB, nullable=False, default=list)  # Array of mime types
+    
+    # Keep for backward compatibility
     storage_key: Mapped[str | None] = mapped_column(Text(), nullable=True)
     mime_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
     meta_json: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
-
-    __table_args__ = (
-        UniqueConstraint("participant_id", "slot_key", name="uq_submission_one_per_slot"),
-    )
