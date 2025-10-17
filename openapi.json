@@ -1,2646 +1,2935 @@
 {
-  "openapi": "3.1.0",
-  "info": {
-    "title": "Chally API",
-    "description": "Chally API for peer accountability challenges",
-    "version": "0.1.0"
-  },
-  "paths": {
-    "/health": {
-      "get": {
-        "summary": "Health",
-        "operationId": "health_health_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        }
-      }
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Chally API",
+        "description": "Chally API for peer accountability challenges",
+        "version": "0.1.0"
     },
-    "/version": {
-      "get": {
-        "summary": "Version",
-        "operationId": "version_version_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
+    "paths": {
+        "/health": {
+            "get": {
+                "summary": "Health",
+                "operationId": "health_health_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
             }
-          }
-        }
-      }
-    },
-    "/auth/register": {
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "summary": "Register",
-        "operationId": "register_auth_register_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterRequest"
-              }
-            }
-          },
-          "required": true
         },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserPublic"
+        "/version": {
+            "get": {
+                "summary": "Version",
+                "operationId": "version_version_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
                 }
-              }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/login": {
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "summary": "Login",
-        "operationId": "login_auth_login_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginRequest"
-              }
-            }
-          },
-          "required": true
         },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TokenPair"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/refresh": {
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "summary": "Refresh",
-        "operationId": "refresh_auth_refresh_post",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TokenPair"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/me": {
-      "get": {
-        "tags": [
-          "auth"
-        ],
-        "summary": "Me",
-        "operationId": "me_auth_me_get",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserPublic"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/challenges": {
-      "post": {
-        "tags": [
-          "challenges"
-        ],
-        "summary": "Create Challenge",
-        "operationId": "create_challenge_challenges_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "X-Client-Timezone",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Client-Timezone"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChallengeCreate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChallengePublic"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/challenges/mine": {
-      "get": {
-        "tags": [
-          "challenges"
-        ],
-        "summary": "List My Challenges",
-        "operationId": "list_my_challenges_challenges_mine_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/ChallengePublic"
-                  },
-                  "type": "array",
-                  "title": "Response List My Challenges Challenges Mine Get"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/challenges/joined": {
-      "get": {
-        "tags": [
-          "challenges"
-        ],
-        "summary": "List Joined",
-        "operationId": "list_joined_challenges_joined_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/ChallengePublic"
-                  },
-                  "type": "array",
-                  "title": "Response List Joined Challenges Joined Get"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/challenges/{challenge_id}": {
-      "get": {
-        "tags": [
-          "challenges"
-        ],
-        "summary": "Get Challenge",
-        "operationId": "get_challenge_challenges__challenge_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "challenge_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Challenge Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChallengePublic"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/challenges/{challenge_id}/participants": {
-      "get": {
-        "tags": [
-          "challenges"
-        ],
-        "summary": "List Participants",
-        "operationId": "list_participants_challenges__challenge_id__participants_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "challenge_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Challenge Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ParticipantWithUser"
-                  },
-                  "title": "Response List Participants Challenges  Challenge Id  Participants Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/challenges/{invite_code}/join": {
-      "post": {
-        "tags": [
-          "challenges"
-        ],
-        "summary": "Join By Code",
-        "operationId": "join_by_code_challenges__invite_code__join_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "invite_code",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Invite Code"
-            }
-          },
-          {
-            "name": "X-Client-Timezone",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Client-Timezone"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "anyOf": [
-                  {
-                    "type": "object",
-                    "additionalProperties": true
-                  },
-                  {
-                    "type": "null"
-                  }
+        "/auth/register": {
+            "post": {
+                "tags": [
+                    "auth"
                 ],
-                "title": "Body"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ParticipantPublic"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/challenges/{challenge_id}/submit": {
-      "post": {
-        "tags": [
-          "challenges"
-        ],
-        "summary": "Submit Proof",
-        "operationId": "submit_proof_challenges__challenge_id__submit_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "challenge_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Challenge Id"
-            }
-          },
-          {
-            "name": "proof_type",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "description": "one of allowed rules proof_types",
-              "title": "Proof Type"
-            },
-            "description": "one of allowed rules proof_types"
-          },
-          {
-            "name": "text",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
+                "summary": "Register",
+                "operationId": "register_auth_register_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegisterRequest"
+                            }
+                        }
+                    },
+                    "required": true
                 },
-                {
-                  "type": "null"
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserPublic"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
                 }
-              ],
-              "description": "text content when proof_type='text'",
-              "title": "Text"
-            },
-            "description": "text content when proof_type='text'"
-          },
-          {
-            "name": "overlay_code",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Login",
+                "operationId": "login_auth_login_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequest"
+                            }
+                        }
+                    },
+                    "required": true
                 },
-                {
-                  "type": "null"
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TokenPair"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
                 }
-              ],
-              "description": "typed overlay code if required",
-              "title": "Overlay Code"
-            },
-            "description": "typed overlay code if required"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Body_submit_proof_challenges__challenge_id__submit_post"
-              }
             }
-          }
         },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SubmissionPublic"
+        "/auth/refresh": {
+            "post": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Refresh",
+                "operationId": "refresh_auth_refresh_post",
+                "parameters": [
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TokenPair"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
                 }
-              }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+        },
+        "/auth/me": {
+            "get": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Me",
+                "operationId": "me_auth_me_get",
+                "parameters": [
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserPublic"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
                 }
-              }
             }
-          }
-        }
-      }
-    },
-    "/challenges/{challenge_id}/submissions": {
-      "get": {
-        "tags": [
-          "challenges"
-        ],
-        "summary": "List Submissions",
-        "operationId": "list_submissions_challenges__challenge_id__submissions_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "challenge_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Challenge Id"
-            }
-          },
-          {
-            "name": "mine",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 1,
-              "minimum": 0,
-              "default": 0,
-              "title": "Mine"
-            }
-          },
-          {
-            "name": "day",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
+        },
+        "/challenges": {
+            "post": {
+                "tags": [
+                    "challenges"
+                ],
+                "summary": "Create Challenge",
+                "operationId": "create_challenge_challenges_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Client-Timezone",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "X-Client-Timezone"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Body_create_challenge_challenges_post"
+                            }
+                        }
+                    }
                 },
-                {
-                  "type": "null"
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ChallengePublic"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
                 }
-              ],
-              "description": "YYYY-MM-DD or 'today'",
-              "title": "Day"
-            },
-            "description": "YYYY-MM-DD or 'today'"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SubmissionPublic"
-                  },
-                  "title": "Response List Submissions Challenges  Challenge Id  Submissions Get"
-                }
-              }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/challenges/{challenge_id}/leaderboard": {
-      "get": {
-        "tags": [
-          "challenges"
-        ],
-        "summary": "Leaderboard",
-        "operationId": "leaderboard_challenges__challenge_id__leaderboard_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "challenge_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Challenge Id"
-            }
-          },
-          {
-            "name": "period",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "pattern": "^(total|current_week)$",
-              "default": "total",
-              "title": "Period"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/LeaderboardRow"
-                  },
-                  "title": "Response Leaderboard Challenges  Challenge Id  Leaderboard Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/challenges/{challenge_id}/submissions/{submission_id}/image": {
-      "get": {
-        "tags": [
-          "challenges"
-        ],
-        "summary": "Get Submission Image",
-        "description": "Retrieve the uploaded image for a submission.",
-        "operationId": "get_submission_image_challenges__challenge_id__submissions__submission_id__image_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "challenge_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Challenge Id"
-            }
-          },
-          {
-            "name": "submission_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Submission Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/feed/today": {
-      "get": {
-        "tags": [
-          "feed"
-        ],
-        "summary": "My Today Feed",
-        "operationId": "my_today_feed_feed_today_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/FeedItem"
-                  },
-                  "type": "array",
-                  "title": "Response My Today Feed Feed Today Get"
-                }
-              }
-            }
-          }
         },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/reviews": {
-      "get": {
-        "tags": [
-          "reviews"
-        ],
-        "summary": "List Default",
-        "operationId": "list_default_reviews_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "challenge_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "uuid"
+        "/challenges/mine": {
+            "get": {
+                "tags": [
+                    "challenges"
+                ],
+                "summary": "List My Challenges",
+                "operationId": "list_my_challenges_challenges_mine_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/ChallengePublic"
+                                    },
+                                    "type": "array",
+                                    "title": "Response List My Challenges Challenges Mine Get"
+                                }
+                            }
+                        }
+                    }
                 },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Challenge Id"
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
             }
-          },
-          {
-            "name": "mine",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 1,
-              "minimum": 0,
-              "default": 0,
-              "title": "Mine"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 20,
-              "title": "Limit"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SubmissionPublic"
-                  },
-                  "title": "Response List Default Reviews Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/reviews/stats": {
-      "get": {
-        "tags": [
-          "reviews"
-        ],
-        "summary": "Review Stats",
-        "description": "Returns global + per-challenge counts:\n  - pending_to_review: pending items you can still vote on\n  - mine_pending: your submissions waiting for quorum\n  - accepted_today / rejected_today: activity pulse (UTC day)\n  - my_votes_today: how many votes you cast today (global)",
-        "operationId": "review_stats_reviews_stats_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "challenge_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "uuid"
+        },
+        "/challenges/joined": {
+            "get": {
+                "tags": [
+                    "challenges"
+                ],
+                "summary": "List Joined",
+                "operationId": "list_joined_challenges_joined_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/ChallengePublic"
+                                    },
+                                    "type": "array",
+                                    "title": "Response List Joined Challenges Joined Get"
+                                }
+                            }
+                        }
+                    }
                 },
-                {
-                  "type": "null"
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/challenges/{challenge_id}": {
+            "get": {
+                "tags": [
+                    "challenges"
+                ],
+                "summary": "Get Challenge",
+                "operationId": "get_challenge_challenges__challenge_id__get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "challenge_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Challenge Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ChallengePublic"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
                 }
-              ],
-              "title": "Challenge Id"
             }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+        },
+        "/challenges/{challenge_id}/participants": {
+            "get": {
+                "tags": [
+                    "challenges"
+                ],
+                "summary": "List Participants",
+                "operationId": "list_participants_challenges__challenge_id__participants_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "challenge_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Challenge Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ParticipantWithUser"
+                                    },
+                                    "title": "Response List Participants Challenges  Challenge Id  Participants Get"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
                 }
-              }
             }
-          }
-        }
-      }
-    },
-    "/reviews/{status}": {
-      "get": {
-        "tags": [
-          "reviews"
-        ],
-        "summary": "List With Status",
-        "operationId": "list_with_status_reviews__status__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "status",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "enum": [
-                "pending",
-                "accepted",
-                "rejected",
-                "all"
-              ],
-              "type": "string",
-              "title": "Status"
-            }
-          },
-          {
-            "name": "challenge_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "uuid"
+        },
+        "/challenges/{invite_code}/join": {
+            "post": {
+                "tags": [
+                    "challenges"
+                ],
+                "summary": "Join By Code",
+                "operationId": "join_by_code_challenges__invite_code__join_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "invite_code",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Invite Code"
+                        }
+                    },
+                    {
+                        "name": "X-Client-Timezone",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "X-Client-Timezone"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "anyOf": [
+                                    {
+                                        "type": "object",
+                                        "additionalProperties": true
+                                    },
+                                    {
+                                        "type": "null"
+                                    }
+                                ],
+                                "title": "Body"
+                            }
+                        }
+                    }
                 },
-                {
-                  "type": "null"
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParticipantPublic"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
                 }
-              ],
-              "title": "Challenge Id"
             }
-          },
-          {
-            "name": "mine",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 1,
-              "minimum": 0,
-              "description": "1=only my submissions",
-              "default": 0,
-              "title": "Mine"
-            },
-            "description": "1=only my submissions"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 20,
-              "title": "Limit"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SubmissionPublic"
-                  },
-                  "title": "Response List With Status Reviews  Status  Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/reviews/vote": {
-      "post": {
-        "tags": [
-          "reviews"
-        ],
-        "summary": "Cast Vote",
-        "operationId": "cast_vote_reviews_vote_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VoteCreate"
-              }
-            }
-          },
-          "required": true
         },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+        "/challenges/{challenge_id}/watermark-code": {
+            "get": {
+                "tags": [
+                    "challenges"
+                ],
+                "summary": "Get Watermark Code",
+                "description": "Generate a watermark code for the mobile app to embed in photos.\nThe code is deterministic based on (challenge_id, participant_id, slot_key).",
+                "operationId": "get_watermark_code_challenges__challenge_id__watermark_code_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "challenge_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Challenge Id"
+                        }
+                    },
+                    {
+                        "name": "slot_key",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "description": "The slot key (e.g., '2025-01-15') to generate code for",
+                            "title": "Slot Key"
+                        },
+                        "description": "The slot key (e.g., '2025-01-15') to generate code for"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
                 }
-              }
             }
-          }
         },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/ledger": {
-      "get": {
-        "tags": [
-          "ledger"
-        ],
-        "summary": "Get Ledger",
-        "operationId": "get_ledger_ledger_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "challengeId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Challengeid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LedgerSnapshot"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/challenges/{challenge_id}/end": {
-      "post": {
-        "tags": [
-          "ledger"
-        ],
-        "summary": "End And Payout",
-        "operationId": "end_and_payout_challenges__challenge_id__end_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "challenge_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Challenge Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/platform/revenue": {
-      "get": {
-        "tags": [
-          "ledger"
-        ],
-        "summary": "Get Platform Revenue",
-        "description": "Get platform revenue statistics from forfeited stakes. Admin only.",
-        "operationId": "get_platform_revenue_platform_revenue_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "days",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 365,
-              "minimum": 1,
-              "description": "Number of days to look back",
-              "default": 30,
-              "title": "Days"
-            },
-            "description": "Number of days to look back"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/platform/ledger": {
-      "get": {
-        "tags": [
-          "ledger"
-        ],
-        "summary": "Get Platform Ledger",
-        "description": "Get complete platform ledger showing all revenue entries. Admin only.",
-        "operationId": "get_platform_ledger_platform_ledger_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "days",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 365,
-              "minimum": 1,
-              "description": "Number of days to look back",
-              "default": 30,
-              "title": "Days"
-            },
-            "description": "Number of days to look back"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 500,
-              "minimum": 1,
-              "description": "Maximum number of entries to return",
-              "default": 50,
-              "title": "Limit"
-            },
-            "description": "Maximum number of entries to return"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/wallet": {
-      "get": {
-        "tags": [
-          "wallet"
-        ],
-        "summary": "Get Wallet",
-        "operationId": "get_wallet_wallet_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WalletSnapshot"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/wallet/deposit/checkout": {
-      "post": {
-        "tags": [
-          "wallet"
-        ],
-        "summary": "Create Deposit Checkout",
-        "operationId": "create_deposit_checkout_wallet_deposit_checkout_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateDepositRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateDepositResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/wallet/withdraw/refund": {
-      "post": {
-        "tags": [
-          "wallet"
-        ],
-        "summary": "Withdraw Refund",
-        "description": "Withdraw tokens back to card via Stripe refunds (FIFO by deposit lots).",
-        "operationId": "withdraw_refund_wallet_withdraw_refund_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WithdrawRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WithdrawResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/stripe/webhook": {
-      "post": {
-        "tags": [
-          "stripe"
-        ],
-        "summary": "Stripe Webhook",
-        "operationId": "stripe_webhook_stripe_webhook_post",
-        "parameters": [
-          {
-            "name": "Stripe-Signature",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
+        "/challenges/{challenge_id}/submit": {
+            "post": {
+                "tags": [
+                    "challenges"
+                ],
+                "summary": "Submit Proof",
+                "operationId": "submit_proof_challenges__challenge_id__submit_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "challenge_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Challenge Id"
+                        }
+                    },
+                    {
+                        "name": "proof_type",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "description": "one of allowed rules proof_types",
+                            "title": "Proof Type"
+                        },
+                        "description": "one of allowed rules proof_types"
+                    },
+                    {
+                        "name": "text",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "text content when proof_type='text'",
+                            "title": "Text"
+                        },
+                        "description": "text content when proof_type='text'"
+                    },
+                    {
+                        "name": "overlay_code",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "typed overlay code if required",
+                            "title": "Overlay Code"
+                        },
+                        "description": "typed overlay code if required"
+                    },
+                    {
+                        "name": "submission_stage",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "optional stage: start/ongoing/end",
+                            "title": "Submission Stage"
+                        },
+                        "description": "optional stage: start/ongoing/end"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Body_submit_proof_challenges__challenge_id__submit_post"
+                            }
+                        }
+                    }
                 },
-                {
-                  "type": "null"
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SubmissionPublic"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
                 }
-              ],
-              "title": "Stripe-Signature"
             }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+        },
+        "/challenges/{challenge_id}/submissions": {
+            "get": {
+                "tags": [
+                    "challenges"
+                ],
+                "summary": "List Submissions",
+                "operationId": "list_submissions_challenges__challenge_id__submissions_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "challenge_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Challenge Id"
+                        }
+                    },
+                    {
+                        "name": "mine",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 1,
+                            "minimum": 0,
+                            "default": 0,
+                            "title": "Mine"
+                        }
+                    },
+                    {
+                        "name": "day",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "YYYY-MM-DD or 'today'",
+                            "title": "Day"
+                        },
+                        "description": "YYYY-MM-DD or 'today'"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/SubmissionPublic"
+                                    },
+                                    "title": "Response List Submissions Challenges  Challenge Id  Submissions Get"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
                 }
-              }
             }
-          }
+        },
+        "/challenges/{challenge_id}/leaderboard": {
+            "get": {
+                "tags": [
+                    "challenges"
+                ],
+                "summary": "Leaderboard",
+                "operationId": "leaderboard_challenges__challenge_id__leaderboard_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "challenge_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Challenge Id"
+                        }
+                    },
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^(total|current_week)$",
+                            "default": "total",
+                            "title": "Period"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/LeaderboardRow"
+                                    },
+                                    "title": "Response Leaderboard Challenges  Challenge Id  Leaderboard Get"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/challenges/{challenge_id}/submissions/{submission_id}/image": {
+            "get": {
+                "tags": [
+                    "challenges"
+                ],
+                "summary": "Get Submission Image",
+                "description": "Retrieve the uploaded image for a submission.",
+                "operationId": "get_submission_image_challenges__challenge_id__submissions__submission_id__image_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "challenge_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Challenge Id"
+                        }
+                    },
+                    {
+                        "name": "submission_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Submission Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/challenges/{challenge_id}/image": {
+            "get": {
+                "tags": [
+                    "challenges"
+                ],
+                "summary": "Get Challenge Image",
+                "description": "Retrieve the challenge image.",
+                "operationId": "get_challenge_image_challenges__challenge_id__image_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "challenge_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Challenge Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/feed/today": {
+            "get": {
+                "tags": [
+                    "feed"
+                ],
+                "summary": "My Today Feed",
+                "operationId": "my_today_feed_feed_today_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/FeedItem"
+                                    },
+                                    "type": "array",
+                                    "title": "Response My Today Feed Feed Today Get"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/reviews": {
+            "get": {
+                "tags": [
+                    "reviews"
+                ],
+                "summary": "List Default",
+                "operationId": "list_default_reviews_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "challenge_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "format": "uuid"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Challenge Id"
+                        }
+                    },
+                    {
+                        "name": "mine",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 1,
+                            "minimum": 0,
+                            "default": 0,
+                            "title": "Mine"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "default": 20,
+                            "title": "Limit"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/SubmissionPublic"
+                                    },
+                                    "title": "Response List Default Reviews Get"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/reviews/stats": {
+            "get": {
+                "tags": [
+                    "reviews"
+                ],
+                "summary": "Review Stats",
+                "description": "Returns global + per-challenge counts:\n  - pending_to_review: pending items you can still vote on\n  - mine_pending: your submissions waiting for quorum\n  - accepted_today / rejected_today: activity pulse (UTC day)\n  - my_votes_today: how many votes you cast today (global)",
+                "operationId": "review_stats_reviews_stats_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "challenge_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "format": "uuid"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Challenge Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/reviews/{status}": {
+            "get": {
+                "tags": [
+                    "reviews"
+                ],
+                "summary": "List With Status",
+                "operationId": "list_with_status_reviews__status__get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "enum": [
+                                "pending",
+                                "accepted",
+                                "rejected",
+                                "all"
+                            ],
+                            "type": "string",
+                            "title": "Status"
+                        }
+                    },
+                    {
+                        "name": "challenge_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "format": "uuid"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Challenge Id"
+                        }
+                    },
+                    {
+                        "name": "mine",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 1,
+                            "minimum": 0,
+                            "description": "1=only my submissions",
+                            "default": 0,
+                            "title": "Mine"
+                        },
+                        "description": "1=only my submissions"
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "default": 20,
+                            "title": "Limit"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/SubmissionPublic"
+                                    },
+                                    "title": "Response List With Status Reviews  Status  Get"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/reviews/vote": {
+            "post": {
+                "tags": [
+                    "reviews"
+                ],
+                "summary": "Cast Vote",
+                "operationId": "cast_vote_reviews_vote_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VoteCreate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/ledger": {
+            "get": {
+                "tags": [
+                    "ledger"
+                ],
+                "summary": "Get Ledger",
+                "operationId": "get_ledger_ledger_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "challengeId",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Challengeid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LedgerSnapshot"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/challenges/{challenge_id}/end": {
+            "post": {
+                "tags": [
+                    "ledger"
+                ],
+                "summary": "End And Payout",
+                "operationId": "end_and_payout_challenges__challenge_id__end_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "challenge_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Challenge Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/platform/revenue": {
+            "get": {
+                "tags": [
+                    "ledger"
+                ],
+                "summary": "Get Platform Revenue",
+                "description": "Get platform revenue statistics from forfeited stakes. Admin only.",
+                "operationId": "get_platform_revenue_platform_revenue_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "days",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 365,
+                            "minimum": 1,
+                            "description": "Number of days to look back",
+                            "default": 30,
+                            "title": "Days"
+                        },
+                        "description": "Number of days to look back"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/platform/ledger": {
+            "get": {
+                "tags": [
+                    "ledger"
+                ],
+                "summary": "Get Platform Ledger",
+                "description": "Get complete platform ledger showing all revenue entries. Admin only.",
+                "operationId": "get_platform_ledger_platform_ledger_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "days",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 365,
+                            "minimum": 1,
+                            "description": "Number of days to look back",
+                            "default": 30,
+                            "title": "Days"
+                        },
+                        "description": "Number of days to look back"
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 500,
+                            "minimum": 1,
+                            "description": "Maximum number of entries to return",
+                            "default": 50,
+                            "title": "Limit"
+                        },
+                        "description": "Maximum number of entries to return"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/wallet": {
+            "get": {
+                "tags": [
+                    "wallet"
+                ],
+                "summary": "Get Wallet",
+                "operationId": "get_wallet_wallet_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WalletSnapshot"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/wallet/deposit/checkout": {
+            "post": {
+                "tags": [
+                    "wallet"
+                ],
+                "summary": "Create Deposit Checkout",
+                "operationId": "create_deposit_checkout_wallet_deposit_checkout_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateDepositRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CreateDepositResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/wallet/withdraw/refund": {
+            "post": {
+                "tags": [
+                    "wallet"
+                ],
+                "summary": "Withdraw Refund",
+                "description": "Withdraw tokens back to card via Stripe refunds (FIFO by deposit lots).",
+                "operationId": "withdraw_refund_wallet_withdraw_refund_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/WithdrawRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WithdrawResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/stripe/webhook": {
+            "post": {
+                "tags": [
+                    "stripe"
+                ],
+                "summary": "Stripe Webhook",
+                "operationId": "stripe_webhook_stripe_webhook_post",
+                "parameters": [
+                    {
+                        "name": "Stripe-Signature",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Stripe-Signature"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
-      }
+    },
+    "components": {
+        "schemas": {
+            "Body_create_challenge_challenges_post": {
+                "properties": {
+                    "payload": {
+                        "type": "string",
+                        "title": "Payload",
+                        "description": "JSON string of challenge data"
+                    },
+                    "image": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "binary"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Image",
+                        "description": "Optional challenge image"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "payload"
+                ],
+                "title": "Body_create_challenge_challenges_post"
+            },
+            "Body_submit_proof_challenges__challenge_id__submit_post": {
+                "properties": {
+                    "file": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "binary"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "File",
+                        "description": "image file when proof_type is an image"
+                    }
+                },
+                "type": "object",
+                "title": "Body_submit_proof_challenges__challenge_id__submit_post"
+            },
+            "ChallengePublic": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "owner_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Owner Id"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name"
+                    },
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description"
+                    },
+                    "visibility": {
+                        "type": "string",
+                        "enum": [
+                            "public",
+                            "private",
+                            "unlisted"
+                        ],
+                        "title": "Visibility"
+                    },
+                    "invite_code": {
+                        "type": "string",
+                        "title": "Invite Code"
+                    },
+                    "starts_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Starts At"
+                    },
+                    "ends_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Ends At"
+                    },
+                    "entry_stake_tokens": {
+                        "type": "integer",
+                        "title": "Entry Stake Tokens"
+                    },
+                    "rules": {
+                        "$ref": "#/components/schemas/RulesDSL-Output"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "active",
+                            "canceled",
+                            "deleted"
+                        ],
+                        "title": "Status"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    },
+                    "participant_count": {
+                        "type": "integer",
+                        "title": "Participant Count"
+                    },
+                    "is_owner": {
+                        "type": "boolean",
+                        "title": "Is Owner"
+                    },
+                    "is_participant": {
+                        "type": "boolean",
+                        "title": "Is Participant"
+                    },
+                    "runtime_state": {
+                        "type": "string",
+                        "enum": [
+                            "upcoming",
+                            "started",
+                            "ended",
+                            "canceled",
+                            "deleted"
+                        ],
+                        "title": "Runtime State"
+                    },
+                    "image_url": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Image Url"
+                    },
+                    "has_image": {
+                        "type": "boolean",
+                        "title": "Has Image",
+                        "default": false
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "owner_id",
+                    "name",
+                    "description",
+                    "visibility",
+                    "invite_code",
+                    "starts_at",
+                    "ends_at",
+                    "entry_stake_tokens",
+                    "rules",
+                    "status",
+                    "created_at",
+                    "participant_count",
+                    "is_owner",
+                    "is_participant",
+                    "runtime_state"
+                ],
+                "title": "ChallengePublic"
+            },
+            "CreateDepositRequest": {
+                "properties": {
+                    "tokens": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0.0,
+                        "title": "Tokens",
+                        "description": "Number of tokens to buy"
+                    },
+                    "success_url": {
+                        "type": "string",
+                        "minLength": 1,
+                        "format": "uri",
+                        "title": "Success Url"
+                    },
+                    "cancel_url": {
+                        "type": "string",
+                        "minLength": 1,
+                        "format": "uri",
+                        "title": "Cancel Url"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "tokens",
+                    "success_url",
+                    "cancel_url"
+                ],
+                "title": "CreateDepositRequest"
+            },
+            "CreateDepositResponse": {
+                "properties": {
+                    "checkout_url": {
+                        "type": "string",
+                        "title": "Checkout Url"
+                    },
+                    "session_id": {
+                        "type": "string",
+                        "title": "Session Id"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "checkout_url",
+                    "session_id"
+                ],
+                "title": "CreateDepositResponse"
+            },
+            "FeedItem": {
+                "properties": {
+                    "challenge_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Challenge Id"
+                    },
+                    "challenge_name": {
+                        "type": "string",
+                        "title": "Challenge Name"
+                    },
+                    "submitted_today": {
+                        "type": "boolean",
+                        "title": "Submitted Today"
+                    },
+                    "my_submission": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/SubmissionPublic"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "challenge_id",
+                    "challenge_name",
+                    "submitted_today"
+                ],
+                "title": "FeedItem"
+            },
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "LeaderboardRow": {
+                "properties": {
+                    "user_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "User Id"
+                    },
+                    "username": {
+                        "type": "string",
+                        "title": "Username"
+                    },
+                    "total": {
+                        "type": "integer",
+                        "title": "Total"
+                    },
+                    "submitted_today": {
+                        "type": "boolean",
+                        "title": "Submitted Today"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "user_id",
+                    "username",
+                    "total",
+                    "submitted_today"
+                ],
+                "title": "LeaderboardRow"
+            },
+            "LedgerEntryPublic": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "challenge_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Challenge Id"
+                    },
+                    "participant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Participant Id"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type"
+                    },
+                    "amount": {
+                        "type": "integer",
+                        "title": "Amount"
+                    },
+                    "ref_submission_id": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Ref Submission Id"
+                    },
+                    "note": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Note"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "challenge_id",
+                    "participant_id",
+                    "type",
+                    "amount",
+                    "created_at"
+                ],
+                "title": "LedgerEntryPublic"
+            },
+            "LedgerSnapshot": {
+                "properties": {
+                    "challenge_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Challenge Id"
+                    },
+                    "pool_tokens": {
+                        "type": "integer",
+                        "title": "Pool Tokens"
+                    },
+                    "your_balance": {
+                        "type": "integer",
+                        "title": "Your Balance"
+                    },
+                    "totals": {
+                        "items": {
+                            "$ref": "#/components/schemas/ParticipantBalance"
+                        },
+                        "type": "array",
+                        "title": "Totals"
+                    },
+                    "entries": {
+                        "items": {
+                            "$ref": "#/components/schemas/LedgerEntryPublic"
+                        },
+                        "type": "array",
+                        "title": "Entries"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "challenge_id",
+                    "pool_tokens",
+                    "your_balance",
+                    "totals",
+                    "entries"
+                ],
+                "title": "LedgerSnapshot"
+            },
+            "LoginRequest": {
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "title": "Email"
+                    },
+                    "password": {
+                        "type": "string",
+                        "title": "Password"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "email",
+                    "password"
+                ],
+                "title": "LoginRequest"
+            },
+            "ParticipantBalance": {
+                "properties": {
+                    "participant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Participant Id"
+                    },
+                    "user_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "User Id"
+                    },
+                    "username": {
+                        "type": "string",
+                        "title": "Username"
+                    },
+                    "balance": {
+                        "type": "integer",
+                        "title": "Balance"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "participant_id",
+                    "user_id",
+                    "username",
+                    "balance"
+                ],
+                "title": "ParticipantBalance"
+            },
+            "ParticipantPublic": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "challenge_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Challenge Id"
+                    },
+                    "user_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "User Id"
+                    },
+                    "joined_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Joined At"
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "title": "Timezone"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "challenge_id",
+                    "user_id",
+                    "joined_at",
+                    "timezone"
+                ],
+                "title": "ParticipantPublic"
+            },
+            "ParticipantWithUser": {
+                "properties": {
+                    "participant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Participant Id"
+                    },
+                    "user_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "User Id"
+                    },
+                    "username": {
+                        "type": "string",
+                        "title": "Username"
+                    },
+                    "joined_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Joined At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "participant_id",
+                    "user_id",
+                    "username",
+                    "joined_at"
+                ],
+                "title": "ParticipantWithUser"
+            },
+            "RegisterRequest": {
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "title": "Email"
+                    },
+                    "username": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "minLength": 3,
+                        "pattern": "^[a-z0-9_]+$",
+                        "title": "Username"
+                    },
+                    "password": {
+                        "type": "string",
+                        "maxLength": 128,
+                        "minLength": 8,
+                        "title": "Password"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "email",
+                    "username",
+                    "password"
+                ],
+                "title": "RegisterRequest"
+            },
+            "RulesDSL-Input": {
+                "properties": {
+                    "frequency": {
+                        "type": "string",
+                        "enum": [
+                            "daily",
+                            "weekly",
+                            "weekdays",
+                            "custom"
+                        ],
+                        "title": "Frequency"
+                    },
+                    "time_window": {
+                        "$ref": "#/components/schemas/TimeWindow-Input"
+                    },
+                    "proof_types": {
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "selfie",
+                                "env_photo",
+                                "text",
+                                "timer_screenshot"
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Proof Types"
+                    },
+                    "verification": {
+                        "$ref": "#/components/schemas/Verification"
+                    },
+                    "grace": {
+                        "type": "integer",
+                        "minimum": 0.0,
+                        "title": "Grace",
+                        "default": 0
+                    },
+                    "penalties": {
+                        "type": "integer",
+                        "minimum": 0.0,
+                        "title": "Penalties",
+                        "description": "per_miss_tokens",
+                        "default": 0
+                    },
+                    "anti_cheat_overlay_required": {
+                        "type": "boolean",
+                        "title": "Anti Cheat Overlay Required",
+                        "default": true
+                    },
+                    "anti_cheat_exif_required": {
+                        "type": "boolean",
+                        "title": "Anti Cheat Exif Required",
+                        "default": true
+                    },
+                    "anti_cheat_phash_check": {
+                        "type": "boolean",
+                        "title": "Anti Cheat Phash Check",
+                        "default": true
+                    },
+                    "max_submissions_per_slot": {
+                        "type": "integer",
+                        "minimum": 1.0,
+                        "title": "Max Submissions Per Slot",
+                        "description": "How many submissions allowed per day/week",
+                        "default": 1
+                    },
+                    "submission_interval_minutes": {
+                        "anyOf": [
+                            {
+                                "type": "integer",
+                                "minimum": 0.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Submission Interval Minutes",
+                        "description": "Minimum minutes between submissions"
+                    },
+                    "require_submission_stages": {
+                        "type": "boolean",
+                        "title": "Require Submission Stages",
+                        "description": "If true, must submit in order",
+                        "default": false
+                    },
+                    "submission_stages": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Submission Stages",
+                        "description": "e.g., ['start', 'ongoing', 'end']"
+                    },
+                    "custom_days": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "integer"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Custom Days",
+                        "description": "Weekday integers: 0=Monday, 6=Sunday"
+                    },
+                    "photos_per_submission": {
+                        "type": "integer",
+                        "minimum": 1.0,
+                        "title": "Photos Per Submission",
+                        "description": "How many photos required per submission",
+                        "default": 1
+                    },
+                    "allowed_usernames": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Allowed Usernames",
+                        "description": "Usernames allowed to join private challenges"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "frequency",
+                    "time_window",
+                    "proof_types",
+                    "verification"
+                ],
+                "title": "RulesDSL"
+            },
+            "RulesDSL-Output": {
+                "properties": {
+                    "frequency": {
+                        "type": "string",
+                        "enum": [
+                            "daily",
+                            "weekly",
+                            "weekdays",
+                            "custom"
+                        ],
+                        "title": "Frequency"
+                    },
+                    "time_window": {
+                        "$ref": "#/components/schemas/TimeWindow-Output"
+                    },
+                    "proof_types": {
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "selfie",
+                                "env_photo",
+                                "text",
+                                "timer_screenshot"
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Proof Types"
+                    },
+                    "verification": {
+                        "$ref": "#/components/schemas/Verification"
+                    },
+                    "grace": {
+                        "type": "integer",
+                        "minimum": 0.0,
+                        "title": "Grace",
+                        "default": 0
+                    },
+                    "penalties": {
+                        "type": "integer",
+                        "minimum": 0.0,
+                        "title": "Penalties",
+                        "description": "per_miss_tokens",
+                        "default": 0
+                    },
+                    "anti_cheat_overlay_required": {
+                        "type": "boolean",
+                        "title": "Anti Cheat Overlay Required",
+                        "default": true
+                    },
+                    "anti_cheat_exif_required": {
+                        "type": "boolean",
+                        "title": "Anti Cheat Exif Required",
+                        "default": true
+                    },
+                    "anti_cheat_phash_check": {
+                        "type": "boolean",
+                        "title": "Anti Cheat Phash Check",
+                        "default": true
+                    },
+                    "max_submissions_per_slot": {
+                        "type": "integer",
+                        "minimum": 1.0,
+                        "title": "Max Submissions Per Slot",
+                        "description": "How many submissions allowed per day/week",
+                        "default": 1
+                    },
+                    "submission_interval_minutes": {
+                        "anyOf": [
+                            {
+                                "type": "integer",
+                                "minimum": 0.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Submission Interval Minutes",
+                        "description": "Minimum minutes between submissions"
+                    },
+                    "require_submission_stages": {
+                        "type": "boolean",
+                        "title": "Require Submission Stages",
+                        "description": "If true, must submit in order",
+                        "default": false
+                    },
+                    "submission_stages": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Submission Stages",
+                        "description": "e.g., ['start', 'ongoing', 'end']"
+                    },
+                    "custom_days": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "integer"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Custom Days",
+                        "description": "Weekday integers: 0=Monday, 6=Sunday"
+                    },
+                    "photos_per_submission": {
+                        "type": "integer",
+                        "minimum": 1.0,
+                        "title": "Photos Per Submission",
+                        "description": "How many photos required per submission",
+                        "default": 1
+                    },
+                    "allowed_usernames": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Allowed Usernames",
+                        "description": "Usernames allowed to join private challenges"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "frequency",
+                    "time_window",
+                    "proof_types",
+                    "verification"
+                ],
+                "title": "RulesDSL"
+            },
+            "SubmissionPublic": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "challenge_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Challenge Id"
+                    },
+                    "participant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Participant Id"
+                    },
+                    "slot_key": {
+                        "type": "string",
+                        "title": "Slot Key"
+                    },
+                    "window_start_utc": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Window Start Utc"
+                    },
+                    "window_end_utc": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Window End Utc"
+                    },
+                    "submitted_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Submitted At"
+                    },
+                    "proof_type": {
+                        "type": "string",
+                        "title": "Proof Type"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status"
+                    },
+                    "text_content": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Text Content"
+                    },
+                    "mime_type": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Mime Type"
+                    },
+                    "media_url": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Media Url"
+                    },
+                    "meta": {
+                        "additionalProperties": true,
+                        "type": "object",
+                        "title": "Meta"
+                    },
+                    "photos_uploaded": {
+                        "type": "integer",
+                        "title": "Photos Uploaded",
+                        "description": "Number of photos uploaded so far",
+                        "default": 1
+                    },
+                    "photos_required": {
+                        "type": "integer",
+                        "title": "Photos Required",
+                        "description": "Total photos required for this submission",
+                        "default": 1
+                    },
+                    "last_photo_uploaded_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Last Photo Uploaded At",
+                        "description": "Timestamp of last photo upload"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "challenge_id",
+                    "participant_id",
+                    "slot_key",
+                    "window_start_utc",
+                    "window_end_utc",
+                    "submitted_at",
+                    "proof_type",
+                    "status"
+                ],
+                "title": "SubmissionPublic"
+            },
+            "TimeWindow-Input": {
+                "properties": {
+                    "start": {
+                        "type": "string",
+                        "format": "time",
+                        "title": "Start"
+                    },
+                    "end": {
+                        "type": "string",
+                        "format": "time",
+                        "title": "End"
+                    },
+                    "timezone": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Timezone"
+                    },
+                    "scope": {
+                        "type": "string",
+                        "enum": [
+                            "participant_local",
+                            "challenge_tz"
+                        ],
+                        "title": "Scope",
+                        "default": "participant_local"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "start",
+                    "end"
+                ],
+                "title": "TimeWindow"
+            },
+            "TimeWindow-Output": {
+                "properties": {
+                    "start": {
+                        "type": "string",
+                        "title": "Start"
+                    },
+                    "end": {
+                        "type": "string",
+                        "title": "End"
+                    },
+                    "timezone": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Timezone"
+                    },
+                    "scope": {
+                        "type": "string",
+                        "enum": [
+                            "participant_local",
+                            "challenge_tz"
+                        ],
+                        "title": "Scope",
+                        "default": "participant_local"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "start",
+                    "end"
+                ],
+                "title": "TimeWindow"
+            },
+            "TokenPair": {
+                "properties": {
+                    "access": {
+                        "type": "string",
+                        "title": "Access"
+                    },
+                    "refresh": {
+                        "type": "string",
+                        "title": "Refresh"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "access",
+                    "refresh"
+                ],
+                "title": "TokenPair"
+            },
+            "UserPublic": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "title": "Email"
+                    },
+                    "username": {
+                        "type": "string",
+                        "title": "Username"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "email",
+                    "username",
+                    "created_at"
+                ],
+                "title": "UserPublic"
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "msg": {
+                        "type": "string",
+                        "title": "Message"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Error Type"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "loc",
+                    "msg",
+                    "type"
+                ],
+                "title": "ValidationError"
+            },
+            "Verification": {
+                "properties": {
+                    "mode": {
+                        "type": "string",
+                        "enum": [
+                            "auto",
+                            "quorum"
+                        ],
+                        "title": "Mode"
+                    },
+                    "quorum_pct": {
+                        "type": "integer",
+                        "maximum": 100.0,
+                        "minimum": 50.0,
+                        "title": "Quorum Pct",
+                        "default": 60
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "mode"
+                ],
+                "title": "Verification"
+            },
+            "VoteCreate": {
+                "properties": {
+                    "submission_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Submission Id"
+                    },
+                    "approve": {
+                        "type": "boolean",
+                        "title": "Approve"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "submission_id",
+                    "approve"
+                ],
+                "title": "VoteCreate"
+            },
+            "WalletEntryPublic": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type"
+                    },
+                    "amount": {
+                        "type": "integer",
+                        "title": "Amount"
+                    },
+                    "currency": {
+                        "type": "string",
+                        "title": "Currency"
+                    },
+                    "external_id": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "External Id"
+                    },
+                    "note": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Note"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "type",
+                    "amount",
+                    "currency",
+                    "created_at"
+                ],
+                "title": "WalletEntryPublic"
+            },
+            "WalletSnapshot": {
+                "properties": {
+                    "balance": {
+                        "type": "integer",
+                        "title": "Balance"
+                    },
+                    "entries": {
+                        "items": {
+                            "$ref": "#/components/schemas/WalletEntryPublic"
+                        },
+                        "type": "array",
+                        "title": "Entries"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "balance",
+                    "entries"
+                ],
+                "title": "WalletSnapshot"
+            },
+            "WithdrawRequest": {
+                "properties": {
+                    "tokens": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0.0,
+                        "title": "Tokens",
+                        "description": "Number of tokens to withdraw"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "tokens"
+                ],
+                "title": "WithdrawRequest"
+            },
+            "WithdrawResponse": {
+                "properties": {
+                    "requested": {
+                        "type": "integer",
+                        "title": "Requested"
+                    },
+                    "refunded": {
+                        "type": "integer",
+                        "title": "Refunded"
+                    },
+                    "stripe_refunds": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "title": "Stripe Refunds"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "requested",
+                    "refunded",
+                    "stripe_refunds"
+                ],
+                "title": "WithdrawResponse"
+            }
+        },
+        "securitySchemes": {
+            "HTTPBearer": {
+                "type": "http",
+                "scheme": "bearer"
+            }
+        }
     }
-  },
-  "components": {
-    "schemas": {
-      "Body_submit_proof_challenges__challenge_id__submit_post": {
-        "properties": {
-          "file": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "binary"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "File",
-            "description": "image file when proof_type is an image"
-          }
-        },
-        "type": "object",
-        "title": "Body_submit_proof_challenges__challenge_id__submit_post"
-      },
-      "ChallengeCreate": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "maxLength": 120,
-            "minLength": 3,
-            "title": "Name"
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
-          },
-          "visibility": {
-            "type": "string",
-            "enum": [
-              "public",
-              "private",
-              "code"
-            ],
-            "title": "Visibility",
-            "default": "code"
-          },
-          "starts_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Starts At"
-          },
-          "ends_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Ends At"
-          },
-          "entry_stake_tokens": {
-            "type": "integer",
-            "minimum": 0.0,
-            "title": "Entry Stake Tokens",
-            "default": 0
-          },
-          "rules": {
-            "$ref": "#/components/schemas/RulesDSL-Input"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "starts_at",
-          "ends_at",
-          "rules"
-        ],
-        "title": "ChallengeCreate"
-      },
-      "ChallengePublic": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "owner_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Owner Id"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
-          },
-          "visibility": {
-            "type": "string",
-            "enum": [
-              "public",
-              "private",
-              "code"
-            ],
-            "title": "Visibility"
-          },
-          "invite_code": {
-            "type": "string",
-            "title": "Invite Code"
-          },
-          "starts_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Starts At"
-          },
-          "ends_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Ends At"
-          },
-          "entry_stake_tokens": {
-            "type": "integer",
-            "title": "Entry Stake Tokens"
-          },
-          "rules": {
-            "$ref": "#/components/schemas/RulesDSL-Output"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "draft",
-              "active",
-              "canceled",
-              "deleted"
-            ],
-            "title": "Status"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          },
-          "participant_count": {
-            "type": "integer",
-            "title": "Participant Count"
-          },
-          "is_owner": {
-            "type": "boolean",
-            "title": "Is Owner"
-          },
-          "is_participant": {
-            "type": "boolean",
-            "title": "Is Participant"
-          },
-          "runtime_state": {
-            "type": "string",
-            "enum": [
-              "upcoming",
-              "started",
-              "ended",
-              "canceled",
-              "deleted"
-            ],
-            "title": "Runtime State"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "owner_id",
-          "name",
-          "description",
-          "visibility",
-          "invite_code",
-          "starts_at",
-          "ends_at",
-          "entry_stake_tokens",
-          "rules",
-          "status",
-          "created_at",
-          "participant_count",
-          "is_owner",
-          "is_participant",
-          "runtime_state"
-        ],
-        "title": "ChallengePublic"
-      },
-      "CreateDepositRequest": {
-        "properties": {
-          "tokens": {
-            "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "title": "Tokens",
-            "description": "Number of tokens to buy"
-          },
-          "success_url": {
-            "type": "string",
-            "minLength": 1,
-            "format": "uri",
-            "title": "Success Url"
-          },
-          "cancel_url": {
-            "type": "string",
-            "minLength": 1,
-            "format": "uri",
-            "title": "Cancel Url"
-          }
-        },
-        "type": "object",
-        "required": [
-          "tokens",
-          "success_url",
-          "cancel_url"
-        ],
-        "title": "CreateDepositRequest"
-      },
-      "CreateDepositResponse": {
-        "properties": {
-          "checkout_url": {
-            "type": "string",
-            "title": "Checkout Url"
-          },
-          "session_id": {
-            "type": "string",
-            "title": "Session Id"
-          }
-        },
-        "type": "object",
-        "required": [
-          "checkout_url",
-          "session_id"
-        ],
-        "title": "CreateDepositResponse"
-      },
-      "FeedItem": {
-        "properties": {
-          "challenge_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Challenge Id"
-          },
-          "challenge_name": {
-            "type": "string",
-            "title": "Challenge Name"
-          },
-          "submitted_today": {
-            "type": "boolean",
-            "title": "Submitted Today"
-          },
-          "my_submission": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/SubmissionPublic"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "type": "object",
-        "required": [
-          "challenge_id",
-          "challenge_name",
-          "submitted_today"
-        ],
-        "title": "FeedItem"
-      },
-      "HTTPValidationError": {
-        "properties": {
-          "detail": {
-            "items": {
-              "$ref": "#/components/schemas/ValidationError"
-            },
-            "type": "array",
-            "title": "Detail"
-          }
-        },
-        "type": "object",
-        "title": "HTTPValidationError"
-      },
-      "LeaderboardRow": {
-        "properties": {
-          "user_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "User Id"
-          },
-          "username": {
-            "type": "string",
-            "title": "Username"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
-          "submitted_today": {
-            "type": "boolean",
-            "title": "Submitted Today"
-          }
-        },
-        "type": "object",
-        "required": [
-          "user_id",
-          "username",
-          "total",
-          "submitted_today"
-        ],
-        "title": "LeaderboardRow"
-      },
-      "LedgerEntryPublic": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "challenge_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Challenge Id"
-          },
-          "participant_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Participant Id"
-          },
-          "type": {
-            "type": "string",
-            "title": "Type"
-          },
-          "amount": {
-            "type": "integer",
-            "title": "Amount"
-          },
-          "ref_submission_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Ref Submission Id"
-          },
-          "note": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Note"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "challenge_id",
-          "participant_id",
-          "type",
-          "amount",
-          "created_at"
-        ],
-        "title": "LedgerEntryPublic"
-      },
-      "LedgerSnapshot": {
-        "properties": {
-          "challenge_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Challenge Id"
-          },
-          "pool_tokens": {
-            "type": "integer",
-            "title": "Pool Tokens"
-          },
-          "your_balance": {
-            "type": "integer",
-            "title": "Your Balance"
-          },
-          "totals": {
-            "items": {
-              "$ref": "#/components/schemas/ParticipantBalance"
-            },
-            "type": "array",
-            "title": "Totals"
-          },
-          "entries": {
-            "items": {
-              "$ref": "#/components/schemas/LedgerEntryPublic"
-            },
-            "type": "array",
-            "title": "Entries"
-          }
-        },
-        "type": "object",
-        "required": [
-          "challenge_id",
-          "pool_tokens",
-          "your_balance",
-          "totals",
-          "entries"
-        ],
-        "title": "LedgerSnapshot"
-      },
-      "LoginRequest": {
-        "properties": {
-          "email": {
-            "type": "string",
-            "format": "email",
-            "title": "Email"
-          },
-          "password": {
-            "type": "string",
-            "title": "Password"
-          }
-        },
-        "type": "object",
-        "required": [
-          "email",
-          "password"
-        ],
-        "title": "LoginRequest"
-      },
-      "ParticipantBalance": {
-        "properties": {
-          "participant_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Participant Id"
-          },
-          "user_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "User Id"
-          },
-          "username": {
-            "type": "string",
-            "title": "Username"
-          },
-          "balance": {
-            "type": "integer",
-            "title": "Balance"
-          }
-        },
-        "type": "object",
-        "required": [
-          "participant_id",
-          "user_id",
-          "username",
-          "balance"
-        ],
-        "title": "ParticipantBalance"
-      },
-      "ParticipantPublic": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "challenge_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Challenge Id"
-          },
-          "user_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "User Id"
-          },
-          "joined_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Joined At"
-          },
-          "timezone": {
-            "type": "string",
-            "title": "Timezone"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "challenge_id",
-          "user_id",
-          "joined_at",
-          "timezone"
-        ],
-        "title": "ParticipantPublic"
-      },
-      "ParticipantWithUser": {
-        "properties": {
-          "participant_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Participant Id"
-          },
-          "user_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "User Id"
-          },
-          "username": {
-            "type": "string",
-            "title": "Username"
-          },
-          "joined_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Joined At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "participant_id",
-          "user_id",
-          "username",
-          "joined_at"
-        ],
-        "title": "ParticipantWithUser"
-      },
-      "RegisterRequest": {
-        "properties": {
-          "email": {
-            "type": "string",
-            "format": "email",
-            "title": "Email"
-          },
-          "username": {
-            "type": "string",
-            "maxLength": 20,
-            "minLength": 3,
-            "pattern": "^[a-z0-9_]+$",
-            "title": "Username"
-          },
-          "password": {
-            "type": "string",
-            "maxLength": 128,
-            "minLength": 8,
-            "title": "Password"
-          }
-        },
-        "type": "object",
-        "required": [
-          "email",
-          "username",
-          "password"
-        ],
-        "title": "RegisterRequest"
-      },
-      "RulesDSL-Input": {
-        "properties": {
-          "frequency": {
-            "type": "string",
-            "enum": [
-              "daily",
-              "weekly",
-              "weekdays"
-            ],
-            "title": "Frequency"
-          },
-          "time_window": {
-            "$ref": "#/components/schemas/TimeWindow-Input"
-          },
-          "proof_types": {
-            "items": {
-              "type": "string",
-              "enum": [
-                "selfie",
-                "env_photo",
-                "text",
-                "timer_screenshot"
-              ]
-            },
-            "type": "array",
-            "title": "Proof Types"
-          },
-          "verification": {
-            "$ref": "#/components/schemas/Verification"
-          },
-          "grace": {
-            "type": "integer",
-            "minimum": 0.0,
-            "title": "Grace",
-            "default": 0
-          },
-          "penalties": {
-            "type": "integer",
-            "minimum": 0.0,
-            "title": "Penalties",
-            "description": "per_miss_tokens",
-            "default": 0
-          },
-          "anti_cheat_overlay_required": {
-            "type": "boolean",
-            "title": "Anti Cheat Overlay Required",
-            "default": true
-          },
-          "anti_cheat_exif_required": {
-            "type": "boolean",
-            "title": "Anti Cheat Exif Required",
-            "default": true
-          },
-          "anti_cheat_phash_check": {
-            "type": "boolean",
-            "title": "Anti Cheat Phash Check",
-            "default": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "frequency",
-          "time_window",
-          "proof_types",
-          "verification"
-        ],
-        "title": "RulesDSL"
-      },
-      "RulesDSL-Output": {
-        "properties": {
-          "frequency": {
-            "type": "string",
-            "enum": [
-              "daily",
-              "weekly",
-              "weekdays"
-            ],
-            "title": "Frequency"
-          },
-          "time_window": {
-            "$ref": "#/components/schemas/TimeWindow-Output"
-          },
-          "proof_types": {
-            "items": {
-              "type": "string",
-              "enum": [
-                "selfie",
-                "env_photo",
-                "text",
-                "timer_screenshot"
-              ]
-            },
-            "type": "array",
-            "title": "Proof Types"
-          },
-          "verification": {
-            "$ref": "#/components/schemas/Verification"
-          },
-          "grace": {
-            "type": "integer",
-            "minimum": 0.0,
-            "title": "Grace",
-            "default": 0
-          },
-          "penalties": {
-            "type": "integer",
-            "minimum": 0.0,
-            "title": "Penalties",
-            "description": "per_miss_tokens",
-            "default": 0
-          },
-          "anti_cheat_overlay_required": {
-            "type": "boolean",
-            "title": "Anti Cheat Overlay Required",
-            "default": true
-          },
-          "anti_cheat_exif_required": {
-            "type": "boolean",
-            "title": "Anti Cheat Exif Required",
-            "default": true
-          },
-          "anti_cheat_phash_check": {
-            "type": "boolean",
-            "title": "Anti Cheat Phash Check",
-            "default": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "frequency",
-          "time_window",
-          "proof_types",
-          "verification"
-        ],
-        "title": "RulesDSL"
-      },
-      "SubmissionPublic": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "challenge_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Challenge Id"
-          },
-          "participant_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Participant Id"
-          },
-          "slot_key": {
-            "type": "string",
-            "title": "Slot Key"
-          },
-          "window_start_utc": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Window Start Utc"
-          },
-          "window_end_utc": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Window End Utc"
-          },
-          "submitted_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Submitted At"
-          },
-          "proof_type": {
-            "type": "string",
-            "title": "Proof Type"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "text_content": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Text Content"
-          },
-          "mime_type": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Mime Type"
-          },
-          "media_url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Media Url"
-          },
-          "meta": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Meta"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "challenge_id",
-          "participant_id",
-          "slot_key",
-          "window_start_utc",
-          "window_end_utc",
-          "submitted_at",
-          "proof_type",
-          "status"
-        ],
-        "title": "SubmissionPublic"
-      },
-      "TimeWindow-Input": {
-        "properties": {
-          "start": {
-            "type": "string",
-            "format": "time",
-            "title": "Start"
-          },
-          "end": {
-            "type": "string",
-            "format": "time",
-            "title": "End"
-          },
-          "timezone": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Timezone"
-          },
-          "scope": {
-            "type": "string",
-            "enum": [
-              "participant_local",
-              "challenge_tz"
-            ],
-            "title": "Scope",
-            "default": "participant_local"
-          }
-        },
-        "type": "object",
-        "required": [
-          "start",
-          "end"
-        ],
-        "title": "TimeWindow"
-      },
-      "TimeWindow-Output": {
-        "properties": {
-          "start": {
-            "type": "string",
-            "title": "Start"
-          },
-          "end": {
-            "type": "string",
-            "title": "End"
-          },
-          "timezone": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Timezone"
-          },
-          "scope": {
-            "type": "string",
-            "enum": [
-              "participant_local",
-              "challenge_tz"
-            ],
-            "title": "Scope",
-            "default": "participant_local"
-          }
-        },
-        "type": "object",
-        "required": [
-          "start",
-          "end"
-        ],
-        "title": "TimeWindow"
-      },
-      "TokenPair": {
-        "properties": {
-          "access": {
-            "type": "string",
-            "title": "Access"
-          },
-          "refresh": {
-            "type": "string",
-            "title": "Refresh"
-          }
-        },
-        "type": "object",
-        "required": [
-          "access",
-          "refresh"
-        ],
-        "title": "TokenPair"
-      },
-      "UserPublic": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "email": {
-            "type": "string",
-            "format": "email",
-            "title": "Email"
-          },
-          "username": {
-            "type": "string",
-            "title": "Username"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "email",
-          "username",
-          "created_at"
-        ],
-        "title": "UserPublic"
-      },
-      "ValidationError": {
-        "properties": {
-          "loc": {
-            "items": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            },
-            "type": "array",
-            "title": "Location"
-          },
-          "msg": {
-            "type": "string",
-            "title": "Message"
-          },
-          "type": {
-            "type": "string",
-            "title": "Error Type"
-          }
-        },
-        "type": "object",
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
-        "title": "ValidationError"
-      },
-      "Verification": {
-        "properties": {
-          "mode": {
-            "type": "string",
-            "enum": [
-              "auto",
-              "quorum"
-            ],
-            "title": "Mode"
-          },
-          "quorum_pct": {
-            "type": "integer",
-            "maximum": 100.0,
-            "minimum": 50.0,
-            "title": "Quorum Pct",
-            "default": 60
-          }
-        },
-        "type": "object",
-        "required": [
-          "mode"
-        ],
-        "title": "Verification"
-      },
-      "VoteCreate": {
-        "properties": {
-          "submission_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Submission Id"
-          },
-          "approve": {
-            "type": "boolean",
-            "title": "Approve"
-          }
-        },
-        "type": "object",
-        "required": [
-          "submission_id",
-          "approve"
-        ],
-        "title": "VoteCreate"
-      },
-      "WalletEntryPublic": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "type": {
-            "type": "string",
-            "title": "Type"
-          },
-          "amount": {
-            "type": "integer",
-            "title": "Amount"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency"
-          },
-          "external_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "External Id"
-          },
-          "note": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Note"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "type",
-          "amount",
-          "currency",
-          "created_at"
-        ],
-        "title": "WalletEntryPublic"
-      },
-      "WalletSnapshot": {
-        "properties": {
-          "balance": {
-            "type": "integer",
-            "title": "Balance"
-          },
-          "entries": {
-            "items": {
-              "$ref": "#/components/schemas/WalletEntryPublic"
-            },
-            "type": "array",
-            "title": "Entries"
-          }
-        },
-        "type": "object",
-        "required": [
-          "balance",
-          "entries"
-        ],
-        "title": "WalletSnapshot"
-      },
-      "WithdrawRequest": {
-        "properties": {
-          "tokens": {
-            "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "title": "Tokens",
-            "description": "Number of tokens to withdraw"
-          }
-        },
-        "type": "object",
-        "required": [
-          "tokens"
-        ],
-        "title": "WithdrawRequest"
-      },
-      "WithdrawResponse": {
-        "properties": {
-          "requested": {
-            "type": "integer",
-            "title": "Requested"
-          },
-          "refunded": {
-            "type": "integer",
-            "title": "Refunded"
-          },
-          "stripe_refunds": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Stripe Refunds"
-          }
-        },
-        "type": "object",
-        "required": [
-          "requested",
-          "refunded",
-          "stripe_refunds"
-        ],
-        "title": "WithdrawResponse"
-      }
-    },
-    "securitySchemes": {
-      "HTTPBearer": {
-        "type": "http",
-        "scheme": "bearer"
-      }
-    }
-  }
 }
