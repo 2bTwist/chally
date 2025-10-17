@@ -31,9 +31,9 @@ export default function TabOneScreen() {
             className="w-full"
           />
           <Button 
-            label="🔐 Auth Mock"
+            label="🔐 Sign In"
             variant="outline"
-            onPress={() => router.push('/auth-mock' as any)}
+            onPress={() => router.push('/auth/sign-in' as any)}
             className="w-full"
           />
           <Button 
