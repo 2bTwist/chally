@@ -13,7 +13,7 @@
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
     "@hookform/resolvers": "^5.2.2",
-    "@react-navigation/native": "^7.1.18",
+    "@react-navigation/native": "^7.1.8",
     "axios": "^1.12.2",
     "expo": "~54.0.13",
     "expo-constants": "~18.0.9",
