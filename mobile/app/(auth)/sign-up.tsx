@@ -50,7 +50,8 @@ export default function SignUp() {
 
     try {
       await register(username.trim(), email.trim(), pw);
-      router.replace('/(app)' as any);
+      // Successfully registered - navigate to sign-in
+      router.replace('/(auth)/sign-in' as any);
     } catch (e: any) {
       const msg = e?.response?.data?.detail ?? e?.message ?? 'Sign-up failed';
       setErr(typeof msg === 'string' ? msg : 'Sign-up failed');

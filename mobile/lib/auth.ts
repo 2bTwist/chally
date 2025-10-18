@@ -19,11 +19,9 @@ export async function login(email: string, password: string): Promise<UserPublic
 }
 
 export async function register(username: string, email: string, password: string): Promise<UserPublic> {
-  // Register returns UserPublic, not tokens - so we need to login after
+  // Register returns UserPublic (just user info, no tokens)
   const response = await api.post<UserPublic>('/auth/register', { username, email, password });
-  
-  // Now login to get tokens
-  return login(email, password);
+  return response.data;
 }
 
 export async function logout() {
