@@ -4,21 +4,59 @@ import { Link, router } from 'expo-router';
 import { Screen } from '@/components/ui/Screen';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
+import { register } from '@/lib/auth';
+import { validateEmail, validateUsername, validatePassword, validatePasswordMatch } from '@/lib/validation';
 
 export default function SignUp() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
   const [confirmPw, setConfirmPw] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
-  const onSubmit = () => {
-    if (pw !== confirmPw) {
-      console.warn('passwords do not match');
+  const onSubmit = async () => {
+    setLoading(true);
+    setErr(null);
+
+    // Validate inputs
+    const usernameErr = validateUsername(username);
+    if (usernameErr) {
+      setErr(usernameErr);
+      setLoading(false);
       return;
     }
-    console.log('sign up', { username, email, pw });
-    // TODO: call API, then on success:
-    router.replace('/(app)' as any);
+
+    const emailErr = validateEmail(email);
+    if (emailErr) {
+      setErr(emailErr);
+      setLoading(false);
+      return;
+    }
+
+    const passwordErr = validatePassword(pw);
+    if (passwordErr) {
+      setErr(passwordErr);
+      setLoading(false);
+      return;
+    }
+
+    const matchErr = validatePasswordMatch(pw, confirmPw);
+    if (matchErr) {
+      setErr(matchErr);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      await register(username.trim(), email.trim(), pw);
+      router.replace('/(app)' as any);
+    } catch (e: any) {
+      const msg = e?.response?.data?.detail ?? e?.message ?? 'Sign-up failed';
+      setErr(typeof msg === 'string' ? msg : 'Sign-up failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -86,10 +124,14 @@ export default function SignUp() {
             </View>
           </View>
 
+          {err ? <Text className="text-red-600 mb-3">{err}</Text> : null}
+
           {/* CTA */}
           <Button
-            label="Create Account"
+            label={loading ? 'Creating account…' : 'Create Account'}
             onPress={onSubmit}
+            loading={loading}
+            disabled={loading || !username || !email || !pw || !confirmPw}
             className="w-full max-w-md bg-neutral-900 dark:bg-neutral-50 rounded-2xl py-4"
           />
 
