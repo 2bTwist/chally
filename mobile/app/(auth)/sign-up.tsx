@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Image, KeyboardAvoidingView, Platform, TextInput, View } from 'react-native';
+import { Image, Keyboard, KeyboardAvoidingView, Platform, ScrollView, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 import { Link, router } from 'expo-router';
 import { Screen } from '@/components/ui/Screen';
 import { Text } from '@/components/ui/Text';
@@ -62,17 +62,23 @@ export default function SignUp() {
 
   return (
     <Screen className="px-6">
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
-        <View className="flex-1 items-center justify-start pt-16">
-          {/* Logo */}
-          <Image
-            source={require('@/assets/images/icon.png')}
-            style={{ width: 56, height: 56, borderRadius: 28, marginBottom: 24 }}
-          />
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView 
+            contentContainerStyle={{ flexGrow: 1 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View className="flex-1 items-center justify-start pt-16">
+              {/* Logo */}
+              <Image
+                source={require('@/assets/images/icon.png')}
+                style={{ width: 56, height: 56, borderRadius: 28, marginBottom: 24 }}
+              />
 
-          {/* Title */}
-          <Text variant="title" className="mb-2">Chally</Text>
-          <Text variant="caption" className="mb-8">Join and start challenging yourself</Text>
+              {/* Title */}
+              <Text variant="title" className="mb-2">Chally</Text>
+              <Text variant="caption" className="mb-8">Join and start challenging yourself</Text>
 
           {/* Grouped inputs */}
           <View className="w-full max-w-md rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 overflow-hidden mb-5">
@@ -136,11 +142,13 @@ export default function SignUp() {
             className="w-full max-w-md bg-neutral-900 dark:bg-neutral-50 rounded-2xl py-4"
           />
 
-          {/* Link */}
-          <Link href="/(auth)/sign-in" asChild>
-            <Text className="mt-6 text-base">Already have an account? <Text className="font-semibold">Sign in</Text></Text>
-          </Link>
-        </View>
+              {/* Link */}
+              <Link href="/(auth)/sign-in" asChild>
+                <Text className="mt-6 text-base">Already have an account? <Text className="font-semibold">Sign in</Text></Text>
+              </Link>
+            </View>
+          </ScrollView>
+        </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     </Screen>
   );
